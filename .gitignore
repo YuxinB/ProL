@@ -4,6 +4,9 @@
 *.log
 *.out
 *.synctex.*
+*.pyc
+
+__pycache__
 
 env
 exps

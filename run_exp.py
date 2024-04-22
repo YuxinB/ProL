@@ -236,12 +236,12 @@ def main():
         "contextlength": 200,
         "seed": 1996,
         "image_size": 28,
-        "device": "cuda:1",
+        "device": "cuda:3",
         "lr": 1e-3,
         "batchsize": 128,
-        "epochs": 1,
+        "epochs": 100,
         "verbose": True,
-        "reps": 5
+        "reps": 10
     })
 
     # train
