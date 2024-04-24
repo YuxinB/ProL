@@ -17,132 +17,176 @@ class SetParams:
         for k, v in dict.items():
             setattr(self, k, v)
 
-def get_pattern(N):
+def get_cycle(N: int) -> list:
+    """Get the primary cycle
+
+    Parameters
+    ----------
+    N : int
+        time between two task switches
+
+    Returns
+    -------
+    list
+        primary cycle
+    """
     return [1] * N + [0] * N
 
-def get_sub_dataset(dataset, classes=(0, 1)):
-    subset = deepcopy(dataset)
-    targets = subset.targets
-    data = torch.cat((
-        subset.data[targets == classes[0]], 
-        subset.data[targets == classes[1]]
-    ), axis=0)
-    targets = torch.cat((
-        targets[targets == classes[0]],
-        targets[targets==classes[1]]
-    )) 
-    targets[targets == classes[0]] = 0
-    targets[targets == classes[1]] = 1
-    subset.data = data
-    subset.targets = targets
-    return subset
+def get_torch_dataset():
+    """Get the original torch datase
 
-def get_data(dist, N, seed):
-    np.random.seed(seed)
-    idx = np.random.choice(len(dist), N, replace=False)
-    return dist.data[idx], dist.targets[idx]
-
-def get_data_sequence(pattern, dist_A, dist_B, seed=1996):
-    data, targets = get_data(dist_A, sum(pattern), 1996)
-    seqData_shape = (len(pattern),) + data.shape[1:]
-    seqData = np.zeros(seqData_shape)
-    seqLab = np.zeros((len(pattern),))
-
-    seqData[pattern], seqLab[pattern] = data, targets
-    seqData[~pattern], seqLab[~pattern] = get_data(dist_B, sum(~pattern), 1996)
-
-    seqData = torch.from_numpy(seqData)
-    seqLab = torch.from_numpy(seqLab).long()
-    return seqData, seqLab
-
-class SequentialDataset(Dataset):
-    def __init__(self, N, t, contextlength=200, seed=1996):
-        dataset = torchvision.datasets.MNIST(
-            root="../data",
+    Returns
+    -------
+    _type_
+        torch dataset
+    """
+    dataset = torchvision.datasets.MNIST(
+            root="data",
             train=True,
+            transform=transforms.Compose([
+                transforms.ToTensor(),
+                transforms.Normalize(mean=[0.5], std=[0.5]),
+                transforms.Lambda(lambda x : torch.flatten(x))
+            ]),
             download=True
         )
-        dist_A = get_sub_dataset(dataset, (0, 1))
-        dist_B = get_sub_dataset(dataset, (2, 3))
+    # normalize
+    tmp = dataset.data.float() / 255.0
+    tmp = (tmp - 0.5)/0.5
+    dataset.data = tmp
+    return dataset
 
-        unit = get_pattern(N)
-        pattern = np.array((unit * math.ceil(t/(2*N)))[:t]).astype("bool")
+def get_task_indicies_and_map(tasks: list, y: np.ndarray):
+    """Get the indices for each task + the label mapping
 
-        data, self.labels = get_data_sequence(pattern, dist_A, dist_B, seed=seed)
-        self.data = data.view(data.shape[0], data.shape[-1]**2)
+    Parameters
+    ----------
+    tasks : list
+        task specification e.g. [[0, 1], [2, 3]]
+    y : np.ndarray
+        dataset targets
+    """
+    tasklib = {}
+    for i, task in enumerate(tasks):
+        tasklib[i] = []
+        for lab in task:
+            tasklib[i].extend(
+                np.where(y == lab)[0].tolist()
+            )
+    mapdict = {}
+    for task in tasks:
+        for i, lab in enumerate(task):
+            mapdict[lab] = i
+    maplab = lambda lab : mapdict[lab]
+    return tasklib, maplab
+
+def get_sequence_indices(N, total_time_steps, tasklib, seed=1996):
+    """Get indices for a sequence drawn from the stochastic process
+
+    Parameters
+    ----------
+    N : time between two task switches
+    total_time_steps : length of the sequence drawn
+    tasklib : original task indices
+    seed : random seed
+
+    Returns
+    -------
+    index sequence
+    """
+    unit = get_cycle(N)
+    pattern = np.array((unit * math.ceil(total_time_steps/(len(unit))))[:total_time_steps]).astype("bool")
+    seqInd = np.zeros((total_time_steps,)).astype('int')
+    np.random.seed(seed)
+    seqInd[pattern] = np.random.choice(tasklib[0], sum(pattern), replace=False)
+    seqInd[~pattern] = np.random.choice(tasklib[1], sum(~pattern), replace=False)
+    return seqInd
+
+class SequentialDataset(Dataset):
+    def __init__(self, dataset, seqInd, maplab, contextlength=200):
+        """Create a dataset of context window (history + single future datum)
+
+        Parameters
+        ----------
+        dataset : _type_
+            original torch dataset
+        seqInd : _type_
+            training sequence indices
+        maplab : _type_
+            label mapper
+        contextlength : int, optional
+            length of the history
+        """
+        self.dataset = dataset
         self.contextlength = contextlength
-        self.t = t
-        self.time = torch.arange(t).float()
+        self.t = len(seqInd)
+        self.time = torch.arange(self.t).float()
+        self.seqInd = seqInd
+        self.maplab = maplab
 
     def __len__(self):
-        return len(self.labels)
+        return len(self.seqInd)
 
     def __getitem__(self, idx):
-        r = np.random.randint(0, len(self.data)-2*self.contextlength) # select the end of the subsequence
-        s = np.random.randint(r+self.contextlength, r+2*self.contextlength)  # select a 'future' time beyond the subsequence
-        
-        data = torch.cat((self.data[r:r+self.contextlength], self.data[s:s+1]), axis=0)
-        labels = torch.cat((self.labels[r:r+self.contextlength], self.labels[s:s+1]), axis=0)
-        time = torch.cat((self.time[r:r+self.contextlength], self.time[s:s+1]), axis=0)
+        r = np.random.randint(0, len(self.seqInd)-2*self.contextlength) # select the start of the history
+        s = np.random.randint(r+self.contextlength, r+2*self.contextlength)  # select a 'future' datum
 
-        target = labels[-1].clone()
-        labels[-1] = np.random.binomial(1, 0.5)
+        id = list(range(r, r+self.contextlength)) + [s]
+        dataid = self.seqInd[id] # get indices for the context window
+
+        data = self.dataset.data[dataid]
+        data = data.view(data.shape[0], data.shape[-1]**2)
+        labels = self.dataset.targets[dataid].apply_(self.maplab)
+        time = self.time[id]
+        
+        target = labels[-1].clone() # true label of the future datum
+        labels[-1] = np.random.binomial(1, 0.5) # replace the true label of the future datum with a random label
 
         return data, time, labels, target
     
 class SequentialTestDataset(Dataset):
-    def __init__(self, N, t, T, train_data, train_labels, contextlength, seed) -> None:
-        self.train_data = train_data
-        self.train_labels = train_labels
-        dataset = torchvision.datasets.MNIST(
-            root="../data",
-            train=False,
-            download=True
-        )
-        dist_A = get_sub_dataset(dataset, (0, 1))
-        dist_B = get_sub_dataset(dataset, (2, 3))
-
-        unit = get_pattern(N)
-        pattern = np.array((unit * math.ceil((t+T)/(2*N))))[t:t+T].astype("bool")
-
-        test_data, self.test_labels = get_data_sequence(pattern, dist_A, dist_B, seed=seed)
-        self.test_data = test_data.view(test_data.shape[0], test_data.shape[-1]**2)
+    def __init__(self, dataset, train_seqInd, test_seqInd, maplab, contextlength) -> None:
+        t = len(train_seqInd)
+        self.dataset = dataset
         self.contextlength = contextlength
-        self.t = t
+        self.train_seqInd = train_seqInd[-contextlength:]
+        self.test_seqInd = test_seqInd[t:]
+        self.maplab = maplab
+        
         self.train_time = torch.arange(t).float()
-        self.test_time = torch.arange(t, t+T).float()
-
+        self.test_time = torch.arange(t, t + len(test_seqInd)).float()
+        
     def __len__(self):
-        return len(self.test_labels)
+        return len(self.test_seqInd)
         
     def __getitem__(self, idx):
-        data = torch.cat((self.train_data[-self.contextlength:], self.test_data[idx:idx+1]), axis=0)
-        labels = torch.cat((self.train_labels[-self.contextlength:], self.test_labels[idx:idx+1]), axis=0)
-        time = torch.cat((self.train_time[-self.contextlength:], self.test_time[idx:idx+1]), axis=0)
+        dataid = self.train_seqInd.tolist() + [self.test_seqInd[idx]] # most recent history + inference datum indices
 
-        target = labels[-1].clone()
-        labels[-1] = np.random.binomial(1, 0.5)
+        data = self.dataset.data[dataid]
+        data = data.view(data.shape[0], data.shape[-1]**2)
+        labels = self.dataset.targets[dataid].apply_(self.maplab)
+        time = torch.cat([
+            self.train_time[-self.contextlength:], 
+            self.test_time[idx].view(1)
+        ])
+
+        target = labels[-1].clone() # true label of the future datum
+        labels[-1] = np.random.binomial(1, 0.5) # replace the true label of the future datum with a random label
 
         return data, time, labels, target
 
 class Trainer:
-    def __init__(self, args) -> None:
+    def __init__(self, dataset, args) -> None:
         self.args = args
 
-        self.dataset = SequentialDataset(
-            N=args.N,
-            t=args.t,
-            contextlength=args.contextlength,
-            seed=args.seed
-        )
-        self.trainloader = DataLoader(self.dataset, batch_size=args.batchsize)
+        self.trainloader = DataLoader(dataset, batch_size=args.batchsize)
 
         self.model = TransformerClassifier(
             input_size=args.image_size ** 2,
-            d_model=256, 
-            num_heads=4,
-            ff_hidden_dim=1024,
-            num_attn_blocks=2,
+            d_model=512, 
+            num_heads=8,
+            ff_hidden_dim=2048,
+            num_attn_blocks=4,
             num_classes=2, 
             contextlength=200
         )
@@ -176,7 +220,7 @@ class Trainer:
                 train_acc += (out.argmax(1) == target).detach().cpu().numpy().mean()
                 self.scheduler.step()
             
-            if args.verbose and (epoch+1) % 1 == 0:
+            if args.verbose and (epoch+1) % 10 == 0:
                 info = {
                     "epoch" : epoch + 1,
                     "loss" : np.round(losses/nb_batches, 4),
@@ -208,62 +252,96 @@ def plotting(y, ci, args):
     t = args.t
     T = args.T
     N = args.N
-    time = np.arange(t, t+T)
+    time = np.arange(t, T)
     
     fig, ax = plt.subplots(figsize=(15, 5))
     ax.plot(time, y, c="k", lw=2)
     ax.fill_between(time, y-ci, y+ci, alpha=0.2, color='k')
 
-    unit = get_pattern(N)
-    pattern = np.array((unit * math.ceil((t+T)/(2*N))))[t:t+T].astype("bool")
+    unit = get_cycle(N)
+    pattern = np.array((unit * math.ceil((T)/(2*N))))[t:T].astype("bool")
 
     for i in time[pattern]:
         ax.add_artist(Rectangle((i, 0), 1, 1, alpha=0.4, edgecolor=None, facecolor="blue"))
     for i in time[~pattern]:
         ax.add_artist(Rectangle((i, 0), 1, 1, alpha=0.4, edgecolor=None, facecolor="orange"))
 
-    ax.set_xlabel("s")
-    ax.set_ylabel("risk")
+    ax.set_xlabel("time")
+    ax.set_ylabel("Instantaneous Risk")
+    ax.set_ylim([0.0, 1.0])
+    ax.set_xlim([time[0], time[-1]])
 
     plt.show()
     plt.savefig("test.png", bbox_inches="tight")
 
 def main():
+    # input parameters
     args = SetParams({
-        "N": 20,
-        "t": 1000,
-        "T": 1000,
-        "contextlength": 200,
-        "seed": 1996,
-        "image_size": 28,
-        "device": "cuda:3",
-        "lr": 1e-3,
+        "N": 20,                    # time between two task switches                   
+        "t": 1010,                  # training time
+        "T": 2000,                  # future time horizon
+        "task": [[0, 1], [2, 3]],   # task specification
+        "contextlength": 200,       
+        "seed": 1996,              
+        "image_size": 28,           
+        "device": "cuda:3",             
+        "lr": 1e-3,         
         "batchsize": 128,
-        "epochs": 100,
+        "epochs": 150,
         "verbose": True,
-        "reps": 10
+        "reps": 100                 # number of test reps
     })
 
+    # get source dataset
+    torch_dataset = get_torch_dataset()
+    
+    # get indices for each task
+    taskInd, maplab = get_task_indicies_and_map(
+        tasks=args.task,
+        y=torch_dataset.targets.numpy()
+    )
+
+    # get a training sequence
+    train_SeqInd = get_sequence_indices(
+        N=args.N, 
+        total_time_steps=args.t, 
+        tasklib=taskInd, 
+        seed=args.seed
+    )
+
+    # sample a bunch of test sequences
+    test_seqInds = [
+        get_sequence_indices(args.N, args.T, taskInd, seed=args.seed+1000*(rep+1))
+        for rep in range(args.reps)
+    ]
+
+    # form the train dataset
+    train_dataset = SequentialDataset(
+        dataset=torch_dataset, 
+        seqInd=train_SeqInd,
+        maplab=maplab,
+        contextlength=args.contextlength
+    )
+    
     # train
-    trainer = Trainer(args)
+    trainer = Trainer(train_dataset, args)
     trainer.run()
 
     # evaluate
     preds = []
     truths = []
     for i in range(args.reps):
-        testdataset = SequentialTestDataset(
-            args.N, 
-            args.t, 
-            args.T, 
-            trainer.dataset.data, 
-            trainer.dataset.labels, 
-            contextlength=args.contextlength,
-            seed=3000 + 500*i
+        # form a test dataset for each test sequence
+        test_dataset = SequentialTestDataset(
+            torch_dataset, 
+            train_SeqInd,
+            test_seqInds[i],
+            maplab,
+            args.contextlength
         )
         testloader = DataLoader(
-            testdataset, 
-            batch_size = 100,
+            test_dataset, 
+            batch_size=100,
             shuffle=False
         )
         preds_rep, truths_rep = trainer.evaluate(testloader)
@@ -272,6 +350,7 @@ def main():
     preds = np.array(preds)
     truths = np.array(truths)
 
+    # compute metrics
     mean_error = np.mean(preds != truths, axis=0).squeeze()
     std_error = np.std(preds != truths, axis=0).squeeze()
     ci = std_error * 1.96/np.sqrt(args.reps).squeeze()
@@ -279,6 +358,7 @@ def main():
     err = np.mean(preds != truths)
     print(f"error = {err:.4f}")
 
+    # plot
     plotting(mean_error, ci, args)
 
 
