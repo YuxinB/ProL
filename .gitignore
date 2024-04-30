@@ -11,3 +11,4 @@ __pycache__
 env
 exps
 wandb
+.DS_Store
