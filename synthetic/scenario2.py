@@ -37,7 +37,6 @@ class Data_Scenario2():
         err /= 2
         return err
 
-
     def estimator_prospective(self, samples):
 
         p_hat1 = np.mean(samples[::2])
@@ -45,15 +44,9 @@ class Data_Scenario2():
 
         return [p_hat1, p_hat2]
 
-    
     def estimator_erm(self, samples):
         p_hat = np.mean(samples)
         return [p_hat, p_hat]
-
-    
-    def hmm_prospective(samples):
-        pass
-
     
     def get_errs(self, seeds, est=0):
         errs = []
@@ -66,7 +59,6 @@ class Data_Scenario2():
                     p_hat = dat.estimator_erm(samples)
                 else:
                     p_hat = dat.estimator_prospective(samples)
-                # if t == 20 and est == 1: import ipdb; ipdb.set_trace()
 
                 err_seed.append(dat.evaluate(p_hat, t))
             errs.append(err_seed)
@@ -84,50 +76,52 @@ def bayes_risk_calc(p):
     return err / 2
 
 
-p=[0.9, 0.1]
-seeds = 10000
-times = list(range(2, 20))
+if __name__ == "__main__":
 
-dat = Data_Scenario2(p, times)
-errs_erm = dat.get_errs(seeds, 0)
-errs_prospective = dat.get_errs(seeds, 1)
+    p=[0.9, 0.1]
+    seeds = 10000
+    times = list(range(2, 20))
 
-bayes_err = bayes_risk_calc(p)
+    dat = Data_Scenario2(p, times)
+    errs_erm = dat.get_errs(seeds, 0)
+    errs_prospective = dat.get_errs(seeds, 1)
 
-
-plt.style.use("seaborn-v0_8-whitegrid")
-sns.set(context='poster',
-        style='ticks',
-        font_scale=0.65,
-        rc={'axes.grid':True,
-            'grid.color':'.9',
-            'grid.linewidth':0.75})
-
-plt.figure(figsize=(7, 5))
-
-avg_erm = np.mean(errs_erm, axis=1)
-avg_pr = np.mean(errs_prospective, axis=1)
-std_erm = np.std(errs_erm, axis=1)
-std_pr = np.std(errs_prospective, axis=1)
-
-plt.plot(times, avg_erm)
-plt.plot(times, avg_pr)
-
-plt.plot(times, np.ones_like(times) * bayes_err, '--', label='Bayes Optimal', color='black')
-plt.fill_between(times,
-                 avg_erm - std_erm / np.sqrt(seeds),
-                 avg_erm + std_erm / np.sqrt(seeds), alpha=0.2)
-plt.fill_between(times,
-                 avg_pr - std_pr / np.sqrt(seeds),
-                 avg_pr + std_pr / np.sqrt(seeds), alpha=0.2)
-plt.ylim([0, 1])
+    bayes_err = bayes_risk_calc(p)
 
 
-plt.xlabel("Number of samples / Time (t)")
-plt.ylabel("Average Prospective risk")
-plt.legend(['Maximum likelihood estimator',
-            'Time-aware empirical risk minimization',
-           ])
-plt.savefig("scenario2.pdf", bbox_inches='tight')
+    plt.style.use("seaborn-v0_8-whitegrid")
+    sns.set(context='poster',
+            style='ticks',
+            font_scale=0.65,
+            rc={'axes.grid':True,
+                'grid.color':'.9',
+                'grid.linewidth':0.75})
 
-plt.show()
+    plt.figure(figsize=(7, 5))
+
+    avg_erm = np.mean(errs_erm, axis=1)
+    avg_pr = np.mean(errs_prospective, axis=1)
+    std_erm = np.std(errs_erm, axis=1)
+    std_pr = np.std(errs_prospective, axis=1)
+
+    plt.plot(times, avg_erm)
+    plt.plot(times, avg_pr)
+
+    plt.plot(times, np.ones_like(times) * bayes_err, '--', label='Bayes Optimal', color='black')
+    plt.fill_between(times,
+                     avg_erm - std_erm / np.sqrt(seeds),
+                     avg_erm + std_erm / np.sqrt(seeds), alpha=0.2)
+    plt.fill_between(times,
+                     avg_pr - std_pr / np.sqrt(seeds),
+                     avg_pr + std_pr / np.sqrt(seeds), alpha=0.2)
+    plt.ylim([0, 1])
+
+
+    plt.xlabel("Number of samples / Time (t)")
+    plt.ylabel("Average Prospective risk")
+    plt.legend(['Maximum likelihood estimator',
+                'Time-aware empirical risk minimization',
+               ])
+    plt.savefig("scenario2.pdf", bbox_inches='tight')
+
+    plt.show()
