@@ -11,3 +11,9 @@ __pycache__
 env
 exps
 wandb
+build
+data
+bin
+experiments/ABAB/multirun
+prol.egg-info
+outputs

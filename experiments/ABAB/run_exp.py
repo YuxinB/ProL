@@ -1,3 +1,7 @@
+'''
+Boilerplate code for the exps
+'''
+
 import torch
 import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
@@ -10,7 +14,8 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 from tqdm.auto import tqdm
 
-from prol.models.protransformer import TransformerClassifier
+from prol.models.proformer import TransformerClassifier
+from prol.models.smallconv import SmallConv
 
 class SetParams:
     def __init__(self, dict) -> None:
@@ -176,20 +181,12 @@ class SequentialTestDataset(Dataset):
         return data, time, labels, target
 
 class Trainer:
-    def __init__(self, dataset, args) -> None:
+    def __init__(self, model, dataset, args) -> None:
         self.args = args
 
         self.trainloader = DataLoader(dataset, batch_size=args.batchsize)
 
-        self.model = TransformerClassifier(
-            input_size=args.image_size ** 2,
-            d_model=512, 
-            num_heads=8,
-            ff_hidden_dim=2048,
-            num_attn_blocks=4,
-            num_classes=2, 
-            contextlength=200
-        )
+        self.model = model
         self.device = torch.device(args.device if torch.cuda.is_available() else "cpu")
         self.model.to(self.device)
 
@@ -278,7 +275,7 @@ def main():
     # input parameters
     args = SetParams({
         "N": 20,                    # time between two task switches                   
-        "t": 1010,                  # training time
+        "t": 2000,                  # training time
         "T": 2000,                  # future time horizon
         "task": [[0, 1], [2, 3]],   # task specification
         "contextlength": 200,       
@@ -322,9 +319,20 @@ def main():
         maplab=maplab,
         contextlength=args.contextlength
     )
+
+    # model
+    model = TransformerClassifier(
+        input_size=args.image_size ** 2,
+        d_model=512, 
+        num_heads=8,
+        ff_hidden_dim=2048,
+        num_attn_blocks=4,
+        num_classes=2, 
+        contextlength=200
+    )
     
     # train
-    trainer = Trainer(train_dataset, args)
+    trainer = Trainer(model, train_dataset, args)
     trainer.run()
 
     # evaluate
