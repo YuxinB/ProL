@@ -37,12 +37,21 @@ class Model(nn.Module):
         x = self.fc(x)
         return x
     
-def model_defaults():
-    return {
-        "channels": 1,
-        "avg_pool": 2, 
-        "lin_size": 80
-    }
+def model_defaults(dataset):
+    if dataset == 'mnist':
+        return {
+            "channels": 1,
+            "avg_pool": 2, 
+            "lin_size": 80
+        }
+    elif dataset == 'cifar-10':
+        return {
+            "channels": 3,
+            "avg_pool": 2, 
+            "lin_size": 320
+        }
+    else:
+        raise NotImplementedError
 
 class SequentialDataset(Dataset):
     def __init__(self, args, dataset, seqInd, maplab):
@@ -57,6 +66,7 @@ class SequentialDataset(Dataset):
         maplab : _type_
             label mapper
         """
+        self.args = args
         self.dataset = dataset
         self.seqInd = seqInd
         self.maplab = maplab
@@ -65,7 +75,10 @@ class SequentialDataset(Dataset):
         return len(self.seqInd)
 
     def __getitem__(self, idx):
-        data = self.dataset.data[self.seqInd[idx]][None, :]
+        if self.args.dataset == 'mnist':
+            data = self.dataset.data[self.seqInd[idx]][None, :]
+        elif self.args.dataset == 'cifar-10':
+            data = self.dataset.data[self.seqInd[idx]]
         label = self.dataset.targets[self.seqInd[idx]].apply_(self.maplab)
         return data, label
 
@@ -80,7 +93,10 @@ class SequentialTestDataset(Dataset):
         return len(self.test_seqInd)
         
     def __getitem__(self, idx):
-        data = self.dataset.data[self.test_seqInd[idx]][None, :]
+        if self.args.dataset == 'mnist':
+            data = self.dataset.data[self.seqInd[idx]][None, :]
+        elif self.args.dataset == 'cifar-10':
+            data = self.dataset.data[self.seqInd[idx]]
         label = self.dataset.targets[self.test_seqInd[idx]].apply_(self.maplab)
         return data, label
     
@@ -156,6 +172,13 @@ def main():
     net = Model(10, 1, 2, 80)
     y = net(x)
     print(y.shape)
+
+    x = torch.randn(1, 3, 32, 32)
+    model_kwargs = model_defaults(dataset='cifar-10')
+    net = Model(2, **model_kwargs)
+    y = net(x)
+    print(y.shape)
+
 
 if __name__ == "__main__":
     main()

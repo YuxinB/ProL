@@ -20,7 +20,7 @@ def get_cycle(N: int) -> list:
     """
     return [1] * N + [0] * N
 
-def get_torch_dataset(root):
+def get_torch_dataset(root, name='mnist'):
     """Get the original torch datase
 
     Returns
@@ -28,20 +28,42 @@ def get_torch_dataset(root):
     _type_
         torch dataset
     """
-    dataset = torchvision.datasets.MNIST(
+    if name == 'mnist':
+        dataset = torchvision.datasets.MNIST(
+                root=root,
+                train=True,
+                transform=transforms.Compose([
+                    transforms.ToTensor(),
+                    transforms.Normalize(mean=[0.5], std=[0.5]),
+                    transforms.Lambda(lambda x : torch.flatten(x))
+                ]),
+                download=False
+            )
+        # normalize
+        tmp = dataset.data.float() / 255.0
+        tmp = (tmp - 0.5)/0.5
+        dataset.data = tmp
+
+    elif name == 'cifar-10':
+        dataset = torchvision.datasets.CIFAR10(
             root=root,
             train=True,
             transform=transforms.Compose([
-                transforms.ToTensor(),
-                transforms.Normalize(mean=[0.5], std=[0.5]),
-                transforms.Lambda(lambda x : torch.flatten(x))
-            ]),
-            download=False
+                    transforms.ToTensor(),
+                    transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
+                    transforms.Lambda(lambda x : torch.flatten(x))
+                ]),
+            download=True
         )
-    # normalize
-    tmp = dataset.data.float() / 255.0
-    tmp = (tmp - 0.5)/0.5
-    dataset.data = tmp
+        # normalize
+        tmp = torch.from_numpy(dataset.data).float() / 255.0
+        tmp = (tmp - 0.5)/0.5
+        dataset.data = tmp
+        tmp = dataset.targets
+        dataset.targets = torch.Tensor(tmp).long()
+
+    assert dataset.data.max() == 1.0
+    assert dataset.data.min() == -1.0
     return dataset
 
 def get_task_indicies_and_map(tasks: list, y: np.ndarray):

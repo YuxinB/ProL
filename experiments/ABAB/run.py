@@ -36,15 +36,16 @@ log = logging.getLogger(__name__)
 def main(cfg):
     # input parameters
     params = {
-        "method": "proformer",
-        "N": 20,                    # time between two task switches                   
+        "dataset": "cifar-10",
+        "method": "smallconv",
+        "N": 20,                     # time between two task switches                   
         "t": cfg.t,                  # training time
-        "T": 5000,                  # future time horizon
-        "task": [[0, 1], [2, 3]],   # task specification
+        "T": 5000,                   # future time horizon
+        "task": [[0, 1], [2, 3]],    # task specification
         "contextlength": 200,       
         "seed": 1996,              
         "image_size": 28,           
-        "device": "cuda:3",             
+        "device": "cuda:0",             
         "lr": 1e-3,         
         "batchsize": 64,
         "epochs": 500,
@@ -57,7 +58,7 @@ def main(cfg):
 
     # get source dataset
     root = '/cis/home/adesilva/ashwin/research/ProL/data'
-    torch_dataset = get_torch_dataset(root)
+    torch_dataset = get_torch_dataset(root, name=args.dataset)
     
     # get indices for each task
     taskInd, maplab = get_task_indicies_and_map(
@@ -97,7 +98,7 @@ def main(cfg):
         train_dataset = method.SequentialDataset(args, **data_kwargs)
 
         # model
-        model_kwargs = method.model_defaults()
+        model_kwargs = method.model_defaults(dataset=args.dataset)
         model = method.Model(
             num_classes=len(args.task[0]),
             **model_kwargs
