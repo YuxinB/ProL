@@ -75,10 +75,7 @@ class SequentialDataset(Dataset):
         return len(self.seqInd)
 
     def __getitem__(self, idx):
-        if self.args.dataset == 'mnist':
-            data = self.dataset.data[self.seqInd[idx]][None, :]
-        elif self.args.dataset == 'cifar-10':
-            data = self.dataset.data[self.seqInd[idx]]
+        data = self.dataset.data[self.seqInd[idx]][None, :]
         label = self.dataset.targets[self.seqInd[idx]].apply_(self.maplab)
         return data, label
 
@@ -93,10 +90,7 @@ class SequentialTestDataset(Dataset):
         return len(self.test_seqInd)
         
     def __getitem__(self, idx):
-        if self.args.dataset == 'mnist':
-            data = self.dataset.data[self.seqInd[idx]][None, :]
-        elif self.args.dataset == 'cifar-10':
-            data = self.dataset.data[self.seqInd[idx]]
+        data = self.dataset.data[self.seqInd[idx]][None, :]
         label = self.dataset.targets[self.test_seqInd[idx]].apply_(self.maplab)
         return data, label
     

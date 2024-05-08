@@ -4,6 +4,7 @@ import math
 from torch.utils.data import Dataset, DataLoader
 import numpy as np
 from tqdm.auto import tqdm
+from ..utils import get_dataloader
 
 
 class SelfAttention(nn.Module):
@@ -56,8 +57,6 @@ class Model(nn.Module):
         return enc
         
     def forward(self, data, labels, times):
-        # v = self.conv_encoder(data)  
-        # v = v.flatten(-2, -1)      
         u = torch.cat((data, labels.unsqueeze(-1)), dim=-1)
         u = self.input_embedding(u)
 
@@ -157,8 +156,12 @@ class SequentialTestDataset(Dataset):
 class Trainer:
     def __init__(self, model, dataset, args) -> None:
         self.args = args
-
-        self.trainloader = DataLoader(dataset, batch_size=args.batchsize)
+        
+        self.trainloader = get_dataloader(
+            dataset,
+            batchsize=args.batchsize,
+            train=True
+        )
 
         self.model = model
         self.device = torch.device(args.device if torch.cuda.is_available() else "cpu")
@@ -197,7 +200,6 @@ class Trainer:
                     "loss" : np.round(losses/nb_batches, 4),
                     "train_acc" : np.round(train_acc/nb_batches, 4)
                 }
-                print(info)
                 log.info(f'{info}')
 
     def evaluate(self, testloader, verbose=False):

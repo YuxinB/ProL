@@ -17,6 +17,7 @@ from prol.process import (
     get_task_indicies_and_map,
     get_sequence_indices
 )
+from prol.utils import get_dataloader
 
 class SetParams:
     def __init__(self, dict) -> None:
@@ -36,8 +37,8 @@ log = logging.getLogger(__name__)
 def main(cfg):
     # input parameters
     params = {
-        "dataset": "cifar-10",
-        "method": "smallconv",
+        "dataset": "mnist",
+        "method": "proformer",
         "N": 20,                     # time between two task switches                   
         "t": cfg.t,                  # training time
         "T": 5000,                   # future time horizon
@@ -45,7 +46,7 @@ def main(cfg):
         "contextlength": 200,       
         "seed": 1996,              
         "image_size": 28,           
-        "device": "cuda:0",             
+        "device": "cuda:1",             
         "lr": 1e-3,         
         "batchsize": 64,
         "epochs": 500,
@@ -98,7 +99,7 @@ def main(cfg):
         train_dataset = method.SequentialDataset(args, **data_kwargs)
 
         # model
-        model_kwargs = method.model_defaults(dataset=args.dataset)
+        model_kwargs = method.model_defaults()
         model = method.Model(
             num_classes=len(args.task[0]),
             **model_kwargs
@@ -120,10 +121,10 @@ def main(cfg):
             "maplab": maplab
             }
             test_dataset = method.SequentialTestDataset(args, **test_kwargs)
-            testloader = DataLoader(
-                test_dataset, 
-                batch_size=100,
-                shuffle=False
+            testloader = get_dataloader(
+                test_dataset,
+                batchsize=100,
+                train=False
             )
             preds_rep, truths_rep = trainer.evaluate(testloader)
             preds.append(preds_rep)
@@ -137,7 +138,7 @@ def main(cfg):
         ci = std_error * 1.96/np.sqrt(args.reps).squeeze()
 
         time_averaged_risk = np.mean(preds != truths)
-        print(f"error = {time_averaged_risk:.4f}")
+        log.info(f"error = {time_averaged_risk:.4f}")
         risk_list.append(time_averaged_risk)
 
     risk = np.mean(risk_list)
