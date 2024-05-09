@@ -3,6 +3,7 @@ import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
 import numpy as np
 from tqdm.auto import tqdm
+from .base_trainer import BaseTrainer
 
 # define the base CNN
 class Model(nn.Module):
@@ -75,11 +76,26 @@ class SequentialDataset(Dataset):
         return len(self.seqInd)
 
     def __getitem__(self, idx):
-        data = self.dataset.data[self.seqInd[idx]][None, :]
+        data = self.dataset.data[self.seqInd[idx]].permute(2, 0, 1)
         label = self.dataset.targets[self.seqInd[idx]].apply_(self.maplab)
         return data, label
 
 class SequentialTestDataset(Dataset):
+    """Create the testing dataset
+
+        Parameters
+        ----------
+        args : _type_
+            _description_
+        dataset : _type_
+            original torch dataset
+        train_seqInd : _type_
+            training sequence indices
+        test_seqInd : _type_
+            testing sequence indices
+        maplab : _type_
+            label mapper
+        """
     def __init__(self, args, dataset, train_seqInd, test_seqInd, maplab) -> None:
         t = len(train_seqInd)
         self.dataset = dataset
@@ -90,75 +106,79 @@ class SequentialTestDataset(Dataset):
         return len(self.test_seqInd)
         
     def __getitem__(self, idx):
-        data = self.dataset.data[self.seqInd[idx]][None, :]
+        data = self.dataset.data[self.test_seqInd[idx]].permute(2, 0, 1)
         label = self.dataset.targets[self.test_seqInd[idx]].apply_(self.maplab)
         return data, label
     
-class Trainer:
+class Trainer(BaseTrainer):
     def __init__(self, model, dataset, args) -> None:
-        self.args = args
+        super().__init__(model, dataset, args)
+    
+# class Trainer:
+#     def __init__(self, model, dataset, args) -> None:
+#         self.args = args
 
-        self.trainloader = DataLoader(dataset, batch_size=args.batchsize)
+#         self.trainloader = DataLoader(dataset, batch_size=args.batchsize)
 
-        self.model = model
-        self.device = torch.device(args.device if torch.cuda.is_available() else "cpu")
-        self.model.to(self.device)
+#         self.model = model
+#         self.device = torch.device(args.device if torch.cuda.is_available() else "cpu")
+#         self.model.to(self.device)
 
-        self.optimizer = torch.optim.SGD(self.model.parameters(), lr=args.lr)
-        self.scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer, step_size=1000, gamma=0.1)
-        self.criterion = nn.CrossEntropyLoss()
+#         self.optimizer = torch.optim.SGD(self.model.parameters(), lr=args.lr)
+#         self.scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer, step_size=1000, gamma=0.1)
+#         self.criterion = nn.CrossEntropyLoss()
 
-    def fit(self, log):
-        args = self.args
-        nb_batches = len(self.trainloader)
-        for epoch in range(args.epochs):
-            self.model.train()
-            losses = 0.0
-            train_acc = 0.0
-            for data, target in self.trainloader:
-                data = data.float().to(self.device)
-                target = target.long().to(self.device)
+#     def fit(self, log):
+#         args = self.args
+#         nb_batches = len(self.trainloader)
+#         for epoch in range(args.epochs):
+#             self.model.train()
+#             losses = 0.0
+#             train_acc = 0.0
+#             for data, target in self.trainloader:
+#                 data = data.float().to(self.device)
+#                 target = target.long().to(self.device)
 
-                out = self.model(data)
-                loss = self.criterion(out, target)
+#                 out = self.model(data)
+#                 loss = self.criterion(out, target)
 
-                self.optimizer.zero_grad()
-                loss.backward()
-                losses += loss.item()
-                self.optimizer.step()
-                train_acc += (out.argmax(1) == target).detach().cpu().numpy().mean()
-                self.scheduler.step()
+#                 self.optimizer.zero_grad()
+#                 loss.backward()
+#                 losses += loss.item()
+#                 self.optimizer.step()
+#                 train_acc += (out.argmax(1) == target).detach().cpu().numpy().mean()
+#                 self.scheduler.step()
 
-            if args.verbose and (epoch+1) % 10 == 0:
-                info = {
-                    "epoch" : epoch + 1,
-                    "loss" : np.round(losses/nb_batches, 4),
-                    "train_acc" : np.round(train_acc/nb_batches, 4)
-                }
-                print(info)
-                log.info(f'{info}')
+#             if args.verbose and (epoch+1) % 10 == 0:
+#                 info = {
+#                     "epoch" : epoch + 1,
+#                     "loss" : np.round(losses/nb_batches, 4),
+#                     "train_acc" : np.round(train_acc/nb_batches, 4)
+#                 }
+#                 print(info)
+#                 log.info(f'{info}')
 
-    def evaluate(self, testloader, verbose=False):
-        self.model.eval()
-        preds = []
-        truths = []
-        if verbose:
-            progress = tqdm(testloader)
-        else:
-            progress = testloader
-        for data, target in progress:
-            data = data.float().to(self.device)
-            target = target.long().to(self.device)
+#     def evaluate(self, testloader, verbose=False):
+#         self.model.eval()
+#         preds = []
+#         truths = []
+#         if verbose:
+#             progress = tqdm(testloader)
+#         else:
+#             progress = testloader
+#         for data, target in progress:
+#             data = data.float().to(self.device)
+#             target = target.long().to(self.device)
 
-            out = self.model(data)
+#             out = self.model(data)
 
-            preds.extend(
-                out.detach().cpu().argmax(1).numpy()
-            )
-            truths.extend(
-                target.detach().cpu().numpy()
-            )
-        return np.array(preds), np.array(truths)
+#             preds.extend(
+#                 out.detach().cpu().argmax(1).numpy()
+#             )
+#             truths.extend(
+#                 target.detach().cpu().numpy()
+#             )
+#         return np.array(preds), np.array(truths)
     
 def main():
     # testing

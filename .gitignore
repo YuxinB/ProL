@@ -5,6 +5,7 @@
 *.out
 *.synctex.*
 *.pyc
+*.json
 
 __pycache__
 
@@ -15,5 +16,6 @@ build
 data
 bin
 experiments/ABAB/multirun
+*/*/multirun
 prol.egg-info
 outputs

@@ -30,19 +30,19 @@ def get_torch_dataset(root, name='mnist'):
     """
     if name == 'mnist':
         dataset = torchvision.datasets.MNIST(
-                root=root,
-                train=True,
-                transform=transforms.Compose([
-                    transforms.ToTensor(),
-                    transforms.Normalize(mean=[0.5], std=[0.5]),
-                    transforms.Lambda(lambda x : torch.flatten(x))
-                ]),
-                download=False
-            )
+            root=root,
+            train=True,
+            transform=transforms.Compose([
+                transforms.ToTensor(),
+                transforms.Normalize(mean=[0.5], std=[0.5]),
+                transforms.Lambda(lambda x : torch.flatten(x))
+            ]),
+            download=True
+        )
         # normalize
         tmp = dataset.data.float() / 255.0
         tmp = (tmp - 0.5)/0.5
-        dataset.data = tmp
+        dataset.data = tmp[..., None]
 
     elif name == 'cifar-10':
         dataset = torchvision.datasets.CIFAR10(
@@ -50,8 +50,7 @@ def get_torch_dataset(root, name='mnist'):
             train=True,
             transform=transforms.Compose([
                     transforms.ToTensor(),
-                    transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
-                    transforms.Lambda(lambda x : torch.flatten(x))
+                    transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])
                 ]),
             download=True
         )
@@ -122,3 +121,35 @@ def get_sequence_indices(N, total_time_steps, tasklib, seed=1996, remove_train_s
         return seqInd, tasklib
     else:
         return seqInd
+
+def draw_synthetic_samples(flip):
+    y = np.random.binomial(1, 0.5)
+    l = 1-y if flip else y
+    x = l * np.random.uniform(-2, -1) + (1-l) * np.random.uniform(1, 2)
+    return x, y
+
+def get_synthetic_data(N, total_time_steps, seed=1996):
+    """Get synthetic data sequence drawn from the stochastic process
+
+    Parameters
+    ----------
+    N : time between two task switches
+    total_time_steps : length of the sequence drawn
+    seed : random seed
+
+    Returns
+    -------
+    index sequence
+    """
+    unit = get_cycle(N)
+    pattern = np.array((unit * math.ceil(total_time_steps/(len(unit))))[:total_time_steps]).astype("bool")
+    data = np.zeros((total_time_steps, 2)).astype('float')
+    np.random.seed(seed)
+    data[pattern] = np.array([draw_synthetic_samples(True) for _ in range(sum(pattern))])
+    data[~pattern] = np.array([draw_synthetic_samples(False) for _ in range(sum(~pattern))])
+    return torch.from_numpy(data[:, 0]).float(), torch.from_numpy(data[:, 1]).long()
+
+if __name__ == "__main__":
+    x, y = get_synthetic_data(20, 100)
+    print(x.shape)
+

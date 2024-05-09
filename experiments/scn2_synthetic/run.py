@@ -10,12 +10,7 @@ import pickle
 import hydra
 import logging
 
-from prol.process import (
-    get_cycle,
-    get_torch_dataset,
-    get_task_indicies_and_map,
-    get_sequence_indices
-)
+from prol.process import get_synthetic_data
 from prol.utils import get_dataloader
 
 class SetParams:
@@ -23,12 +18,13 @@ class SetParams:
         for k, v in dict.items():
             setattr(self, k, v)
 
-def get_module(name):
+def get_modules(name):
     try: 
-        module = importlib.import_module(f"prol.models.{name}")
+        module1 = importlib.import_module(f"prol.models.{name}")
+        module2 = importlib.import_module(f"prol.datahandlers.{name}_handle")
     except ImportError:
         print(f"Module {name} not found")
-    return module
+    return module1, module2
 
 log = logging.getLogger(__name__)
 
@@ -36,35 +32,30 @@ log = logging.getLogger(__name__)
 def main(cfg):
     # input parameters
     params = {
-        "dataset": "mnist",
+        # experiment params
+        "dataset": "synthetic",
         "method": "proformer",
         "N": 20,                     # time between two task switches                   
         "t": cfg.t,                  # training time
         "T": 5000,                   # future time horizon
-        "task": [[0, 1], [2, 3]],    # task specification
-        "contextlength": 200,       
-        "seed": 1996,              
-        "image_size": 64,           
-        "device": "cuda:0",             
-        "lr": 1e-3,         
-        "batchsize": 64,
-        "epochs": 1000,
-        "verbose": True,
+        "seed": 1996,
+        "device": "cuda:1",
         "reps": 100,                 # number of test reps
-        "outer_reps": 3
+        "outer_reps": 3,
+
+        # transformer params
+        "contextlength": 200, 
+        "encoding_type": 'vanilla',
+        "multihop": False,
+
+        # training params             
+        "lr": 1e-3,         
+        "batchsize": 128,
+        "epochs": 500,
+        "verbose": True
     }
     args = SetParams(params)
     log.info(f'{params}')
-
-    # get source dataset
-    root = '/cis/home/adesilva/ashwin/research/ProL/data'
-    torch_dataset = get_torch_dataset(root, name=args.dataset)
-    
-    # get indices for each task
-    taskInd, maplab = get_task_indicies_and_map(
-        tasks=args.task,
-        y=torch_dataset.targets.numpy()
-    )
 
     risk_list = []
     for outer_rep in range(args.outer_reps):
@@ -72,35 +63,31 @@ def main(cfg):
         
         # get a training sequence
         seed = args.seed * outer_rep * 2357
-        train_SeqInd, updated_taskInd = get_sequence_indices(
-            N=args.N, 
-            total_time_steps=args.t, 
-            tasklib=taskInd, 
-            seed=seed,
-            remove_train_samples=True
+        x_train, y_train = get_synthetic_data(
+            N=args.N,
+            total_time_steps=args.t,
+            seed=seed
         )
 
         # sample a bunch of test sequences
-        test_seqInds = [
-            get_sequence_indices(args.N, args.T, updated_taskInd, seed=seed+1000*(inner_rep+1))
+        test_data = [
+            get_synthetic_data(args.N, args.T, seed=seed+1000*(inner_rep+1))
             for inner_rep in range(args.reps)
         ]
 
         # get the module for the specified method
-        method = get_module(args.method)
+        method, datahandler = get_modules(args.method)
 
         # form the train dataset
-        data_kwargs = {
-            "dataset": torch_dataset, 
-            "seqInd": train_SeqInd, 
-            "maplab": maplab
-        }
-        train_dataset = method.SequentialDataset(args, **data_kwargs)
+        train_dataset = datahandler.SyntheticSequentialDataset(args, x_train, y_train)
 
         # model
         model_kwargs = method.model_defaults(args.dataset)
+        if args.method == 'proformer':
+            model_kwargs['encoding_type'] = args.encoding_type
+        log.info(f'{model_kwargs}')
         model = method.Model(
-            num_classes=len(args.task[0]),
+            num_classes=2,
             **model_kwargs
         )
         
@@ -113,13 +100,8 @@ def main(cfg):
         truths = []
         for i in tqdm(range(args.reps)):
             # form a test dataset for each test sequence
-            test_kwargs = {
-            "dataset": torch_dataset, 
-            "train_seqInd": train_SeqInd, 
-            "test_seqInd": test_seqInds[i], 
-            "maplab": maplab
-            }
-            test_dataset = method.SequentialTestDataset(args, **test_kwargs)
+            x_test, y_test = test_data[i]
+            test_dataset = datahandler.SyntheticSequentialTestDataset(args, x_train, y_train, x_test, y_test)
             preds_rep, truths_rep = trainer.evaluate(test_dataset)
             preds.append(preds_rep)
             truths.append(truths_rep)
