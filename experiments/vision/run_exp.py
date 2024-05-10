@@ -15,7 +15,7 @@ from matplotlib.patches import Rectangle
 from tqdm.auto import tqdm
 
 from prol.models.proformer import TransformerClassifier
-from prol.models.smallconv import SmallConv
+from prol.models.cnn import SmallConv
 
 class SetParams:
     def __init__(self, dict) -> None:

@@ -23,12 +23,13 @@ class SetParams:
         for k, v in dict.items():
             setattr(self, k, v)
 
-def get_module(name):
+def get_modules(name):
     try: 
-        module = importlib.import_module(f"prol.models.{name}")
+        module1 = importlib.import_module(f"prol.models.{name}")
+        module2 = importlib.import_module(f"prol.datahandlers.{name}_handle")
     except ImportError:
         print(f"Module {name} not found")
-    return module
+    return module1, module2
 
 log = logging.getLogger(__name__)
 
@@ -36,22 +37,37 @@ log = logging.getLogger(__name__)
 def main(cfg):
     # input parameters
     params = {
+        # dataset
         "dataset": "mnist",
-        "method": "proformer",
+        "task": [[0, 1], [2, 3]],    # task specification
+
+        # experiment
+        "method": "timecnn",         # select from {proformer, cnn, mlp, timecnn}
         "N": 20,                     # time between two task switches                   
         "t": cfg.t,                  # training time
         "T": 5000,                   # future time horizon
-        "task": [[0, 1], [2, 3]],    # task specification
-        "contextlength": 200,       
-        "seed": 1996,              
-        "image_size": 64,           
-        "device": "cuda:0",             
+        "seed": 1996,   
+        "device": "cuda:1",          # device
+        "reps": 100,                 # number of test reps
+        "outer_reps": 3,         
+       
+        # proformer
+        "proformer" : {
+            "contextlength": 200, 
+            "encoding_type": 'vanilla',      
+            "multihop": False
+        },
+
+        # timecnn
+        "timecnn": {
+            "encoding_type": 'freq', 
+        },
+              
+        # training params
         "lr": 1e-3,         
         "batchsize": 64,
         "epochs": 1000,
-        "verbose": True,
-        "reps": 100,                 # number of test reps
-        "outer_reps": 3
+        "verbose": True
     }
     args = SetParams(params)
     log.info(f'{params}')
@@ -87,7 +103,7 @@ def main(cfg):
         ]
 
         # get the module for the specified method
-        method = get_module(args.method)
+        method, datahandler = get_modules(args.method)
 
         # form the train dataset
         data_kwargs = {
@@ -95,10 +111,16 @@ def main(cfg):
             "seqInd": train_SeqInd, 
             "maplab": maplab
         }
-        train_dataset = method.SequentialDataset(args, **data_kwargs)
+        train_dataset = datahandler.VisionSequentialDataset(args, **data_kwargs)
 
         # model
         model_kwargs = method.model_defaults(args.dataset)
+        if args.method == 'proformer':
+            model_kwargs['encoding_type'] = args.proformer['encoding_type']
+        elif args.method == 'timecnn':
+            model_kwargs['encoding_type'] = args.timecnn['encoding_type']
+        else:
+            raise NotImplementedError
         model = method.Model(
             num_classes=len(args.task[0]),
             **model_kwargs
@@ -119,7 +141,7 @@ def main(cfg):
             "test_seqInd": test_seqInds[i], 
             "maplab": maplab
             }
-            test_dataset = method.SequentialTestDataset(args, **test_kwargs)
+            test_dataset = datahandler.VisionSequentialTestDataset(args, **test_kwargs)
             preds_rep, truths_rep = trainer.evaluate(test_dataset)
             preds.append(preds_rep)
             truths.append(truths_rep)

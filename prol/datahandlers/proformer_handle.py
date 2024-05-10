@@ -30,7 +30,7 @@ class SyntheticSequentialDataset(Dataset):
         if self.args.multihop:
             s = np.random.randint(r+self.contextlength, r+2*self.contextlength)  # select a 'future' datum
         else:
-            s = r+self.contextlength  # select a 'future' datum
+            s = r+self.contextlength  # select the next datum
 
         id = list(range(r, r+self.contextlength)) + [s]
 
