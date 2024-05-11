@@ -65,7 +65,7 @@ def get_torch_dataset(root, name='mnist'):
     assert dataset.data.min() == -1.0
     return dataset
 
-def get_task_indicies_and_map(tasks: list, y: np.ndarray):
+def get_task_indicies_and_map(tasks: list, y: np.ndarray, type='covariate-shift'):
     """Get the indices for each task + the label mapping
 
     Parameters
@@ -82,12 +82,42 @@ def get_task_indicies_and_map(tasks: list, y: np.ndarray):
             tasklib[i].extend(
                 np.where(y == lab)[0].tolist()
             )
-    mapdict = {}
-    for task in tasks:
-        for i, lab in enumerate(task):
-            mapdict[lab] = i
-    maplab = lambda lab : mapdict[lab]
-    return tasklib, maplab
+    if type == 'covariate-shift':
+        mapdict = {}
+        for task in tasks:
+            for i, lab in enumerate(task):
+                mapdict[lab] = i
+        maplab = lambda lab : mapdict[lab]
+        return tasklib, maplab
+    elif type == 'label-swap':
+        assert len(tasklib) == 1
+        assert len(tasks) == 1
+        assert len(tasks[0]) == 2
+        
+        taskids = np.array(tasklib[0])
+        np.random.seed(1)
+        taskids = taskids[np.random.permutation(len(taskids))]
+        tasklib_ = {}
+        tasklib_[0] = taskids[:len(taskids)//2].tolist()
+        tasklib_[1] = taskids[len(taskids)//2:].tolist()
+        
+        tasks_ = [tasks[0], [10, 11]]
+        mapdict = {}
+        for task in tasks_:
+            for i, lab in enumerate(task):
+                mapdict[lab] = i
+        mapdict[10] = 1
+        mapdict[11] = 0
+        maplab = lambda lab : mapdict[lab] 
+
+        dummydict = {
+            tasks[0][0]: 10, 
+            tasks[0][1]: 11
+        }
+        dummylab = lambda lab : dummydict[lab]
+        return tasklib_, maplab, dummylab
+    else:
+        raise NotImplementedError
 
 def get_sequence_indices(N, total_time_steps, tasklib, seed=1996, remove_train_samples=False):
     """Get indices for a sequence drawn from the stochastic process
