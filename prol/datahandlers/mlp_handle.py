@@ -8,12 +8,12 @@ class SyntheticSequentialDataset(Dataset):
 
         Parameters
         ----------
-        dataset : _type_
-            original torch dataset
-        seqInd : _type_
-            training sequence indices
-        maplab : _type_
-            label mapper
+        args : _type_
+            configs
+        x : torch tensor
+            inputs
+        y : torch tensor
+            labels
         """
         self.data = x
         self.targets = y
@@ -33,15 +33,15 @@ class SyntheticSequentialTestDataset(Dataset):
         Parameters
         ----------
         args : _type_
-            _description_
-        dataset : _type_
-            original torch dataset
-        train_seqInd : _type_
-            training sequence indices
-        test_seqInd : _type_
-            testing sequence indices
-        maplab : _type_
-            label mapper
+            configs
+        x_train : torch tensor
+            train inputs
+        y_train : torch tensor
+            train labels
+        x : torch tensor
+            test inputs
+        y : torch tensor
+            test labels
         """
         t = len(y_train)
         self.test_data = x[t:]

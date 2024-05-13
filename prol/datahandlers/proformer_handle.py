@@ -10,9 +10,9 @@ class SyntheticSequentialDataset(Dataset):
         ----------
         args : _type_
             _description_
-        x : _type_
+        x : torch tensor
             data
-        y : _type_
+        y : torch tensor
             targets
         """
         self.args = args
@@ -51,13 +51,13 @@ class SyntheticSequentialTestDataset(Dataset):
         ----------
         args : _type_
             _description_
-        x_train : _type_
+        x_train : torch tensor
             train data
-        y_train : _type_
+        y_train : torch tensor
             train targets
-        x : _type_
+        x : torch tensor
             test data
-        y : _type_
+        y : torch tensor
             test targets
         """
         t = len(y_train)

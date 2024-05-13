@@ -19,3 +19,4 @@ experiments/ABAB/multirun
 */*/multirun
 prol.egg-info
 outputs
+.vscode

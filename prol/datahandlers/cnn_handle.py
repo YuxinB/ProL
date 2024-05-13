@@ -7,6 +7,8 @@ class VisionSequentialDataset(Dataset):
 
         Parameters
         ----------
+        args : _type_
+            configs
         dataset : _type_
             original torch dataset
         seqInd : _type_
@@ -33,7 +35,7 @@ class VisionSequentialTestDataset(Dataset):
         Parameters
         ----------
         args : _type_
-            _description_
+            configs
         dataset : _type_
             original torch dataset
         train_seqInd : _type_
