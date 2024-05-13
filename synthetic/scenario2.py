@@ -117,6 +117,7 @@ if __name__ == "__main__":
     plt.ylim([0, 1])
 
 
+    plt.title("Independent but not identically distributed")
     plt.xlabel("Number of samples / Time (t)")
     plt.ylabel("Average Prospective risk")
     plt.legend(['Maximum likelihood estimator',

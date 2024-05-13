@@ -66,7 +66,7 @@ sns.set(context='poster',
             'grid.color':'.9',
             'grid.linewidth':0.75})
 
-plt.figure(figsize=(5, 5))
+plt.figure(figsize=(7, 5))
 
 plt.plot(times, avg_errs)
 plt.plot(times, avg_errs_b)
@@ -74,6 +74,7 @@ plt.plot(times, np.ones_like(times) * (1-p), '--', label='Bayes Optimal', color=
 plt.fill_between(times, avg_errs - std_errs, avg_errs + std_errs, alpha=0.2)
 plt.fill_between(times, avg_errs_b - std_errs_b, avg_errs_b + std_errs_b, alpha=0.2)
 plt.ylim([0, 1])
+plt.title('Independent and identically distributed')
 
 
 plt.xlabel("Number of samples / Time (t)")
