@@ -5,7 +5,6 @@ import numpy as np
 from tqdm.auto import tqdm
 from .base_trainer import BaseTrainer
 
-# define the base CNN
 class Model(nn.Module):
     """
     Small convolution network with no residual connections (single-head)

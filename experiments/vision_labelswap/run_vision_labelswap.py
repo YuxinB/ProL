@@ -38,16 +38,16 @@ def main(cfg):
     # input parameters
     params = {
         # dataset
-        "dataset": "mnist",
+        "dataset": "cifar-10",
         "task": [[0, 1]],    # task specification
 
         # experiment
-        "method": "timecnn",         # select from {proformer, cnn, mlp, timecnn}
+        "method": "timeresnet",         # select from {proformer, cnn, mlp, timecnn}
         "N": 20,                     # time between two task switches                   
         "t": cfg.t,                  # training time
         "T": 5000,                   # future time horizon
         "seed": 1996,   
-        "device": "cuda:0",          # device
+        "device": "cuda:1",          # device
         "reps": 100,                 # number of test reps
         "outer_reps": 3,         
        
@@ -62,11 +62,16 @@ def main(cfg):
         "timecnn": {
             "encoding_type": 'freq', 
         },
+
+        # timeresnet
+        "timeresnet": {
+            "encoding_type": 'freq', 
+        },
               
         # training params
         "lr": 1e-3,         
         "batchsize": 64,
-        "epochs": 500,
+        "epochs": 2000,
         "verbose": True
     }
     args = SetParams(params)
@@ -122,6 +127,8 @@ def main(cfg):
         if args.method == 'proformer':
             model_kwargs['encoding_type'] = args.proformer['encoding_type']
         elif args.method == 'timecnn':
+            model_kwargs['encoding_type'] = args.timecnn['encoding_type']
+        elif args.method == 'timeresnet':
             model_kwargs['encoding_type'] = args.timecnn['encoding_type']
         log.info(f'{model_kwargs}')
         model = method.Model(
