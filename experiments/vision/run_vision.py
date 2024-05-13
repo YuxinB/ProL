@@ -1,5 +1,5 @@
 '''
-Boilerplate code for the exps
+Vision covariate shift exps
 '''
 
 import importlib
