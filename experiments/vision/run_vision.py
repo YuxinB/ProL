@@ -119,8 +119,7 @@ def main(cfg):
             model_kwargs['encoding_type'] = args.proformer['encoding_type']
         elif args.method == 'timecnn':
             model_kwargs['encoding_type'] = args.timecnn['encoding_type']
-        else:
-            raise NotImplementedError
+        log.info(f'{model_kwargs}')
         model = method.Model(
             num_classes=len(args.task[0]),
             **model_kwargs
