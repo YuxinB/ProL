@@ -27,8 +27,6 @@ class Model(nn.Module):
         self.bn2 = nn.BatchNorm2d(d_model)
         self.conv3 = nn.Conv2d(d_model, d_model, kernel_size=3)
         self.bn3 = nn.BatchNorm2d(d_model)
-        self.conv4 = nn.Conv2d(d_model, d_model, kernel_size=1)
-        self.bn4 = nn.BatchNorm2d(d_model)
         self.maxpool = nn.MaxPool2d(avg_pool)
 
         # linear layers
@@ -79,13 +77,8 @@ class Model(nn.Module):
         x = self.conv2(x)
         x = self.maxpool(self.relu(self.bn2(x)))
 
-        x = x + t
         x = self.conv3(x)
         x = self.maxpool(self.relu(self.bn3(x)))
-
-        x = x + t
-        x = self.conv4(x)
-        x = self.relu(self.bn4(x))
         x = x.flatten(1, -1)
 
         x = self.fc(x)
@@ -108,62 +101,6 @@ def model_defaults(dataset):
         }
     else:
         raise NotImplementedError
-
-class SequentialDataset(Dataset):
-    def __init__(self, args, dataset, seqInd, maplab):
-        """Create a dataset of context window (history + single future datum)
-
-        Parameters
-        ----------
-        dataset : _type_
-            original torch dataset
-        seqInd : _type_
-            training sequence indices
-        maplab : _type_
-            label mapper
-        """
-        self.args = args
-        self.dataset = dataset
-        self.seqInd = seqInd
-        self.maplab = maplab
-
-    def __len__(self):
-        return len(self.seqInd)
-
-    def __getitem__(self, idx):
-        data = self.dataset.data[self.seqInd[idx]].permute(2, 0, 1)
-        label = self.dataset.targets[self.seqInd[idx]].apply_(self.maplab)
-        return data, label
-
-class SequentialTestDataset(Dataset):
-    """Create the testing dataset
-
-        Parameters
-        ----------
-        args : _type_
-            _description_
-        dataset : _type_
-            original torch dataset
-        train_seqInd : _type_
-            training sequence indices
-        test_seqInd : _type_
-            testing sequence indices
-        maplab : _type_
-            label mapper
-        """
-    def __init__(self, args, dataset, train_seqInd, test_seqInd, maplab) -> None:
-        t = len(train_seqInd)
-        self.dataset = dataset
-        self.test_seqInd = test_seqInd[t:]
-        self.maplab = maplab
-        
-    def __len__(self):
-        return len(self.test_seqInd)
-        
-    def __getitem__(self, idx):
-        data = self.dataset.data[self.test_seqInd[idx]].permute(2, 0, 1)
-        label = self.dataset.targets[self.test_seqInd[idx]].apply_(self.maplab)
-        return data, label
     
 class Trainer(BaseTrainer):
     def __init__(self, model, dataset, args) -> None:

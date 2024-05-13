@@ -42,7 +42,7 @@ def main(cfg):
         "task": [[0, 1]],    # task specification
 
         # experiment
-        "method": "proformer",         # select from {proformer, cnn, mlp, timecnn}
+        "method": "timecnn",         # select from {proformer, cnn, mlp, timecnn}
         "N": 20,                     # time between two task switches                   
         "t": cfg.t,                  # training time
         "T": 5000,                   # future time horizon
