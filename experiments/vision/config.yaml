@@ -1,4 +1,4 @@
-t: 100
+t: 500
 
 defaults:
   - override hydra/launcher: joblib

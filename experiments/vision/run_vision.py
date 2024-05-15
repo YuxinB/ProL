@@ -38,11 +38,11 @@ def main(cfg):
     # input parameters
     params = {
         # dataset
-        "dataset": "mnist",
+        "dataset": "cifar-10",
         "task": [[0, 1], [2, 3]],    # task specification
 
         # experiment
-        "method": "timecnn",         # select from {proformer, cnn, mlp, timecnn}
+        "method": "conv_proformer",         # select from {proformer, cnn, mlp, timecnn}
         "N": 20,                     # time between two task switches                   
         "t": cfg.t,                  # training time
         "T": 5000,                   # future time horizon
@@ -58,6 +58,13 @@ def main(cfg):
             "multihop": False
         },
 
+        # conv_proformer
+        "conv_proformer" : {
+            "contextlength": 200, 
+            "encoding_type": 'freq',      
+            "multihop": True
+        },
+
         # timecnn
         "timecnn": {
             "encoding_type": 'freq', 
@@ -65,7 +72,7 @@ def main(cfg):
               
         # training params
         "lr": 1e-3,         
-        "batchsize": 64,
+        "batchsize": 32,
         "epochs": 1000,
         "verbose": True
     }
