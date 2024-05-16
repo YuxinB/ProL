@@ -98,7 +98,7 @@ class Data_Scenario3():
 if __name__ == "__main__":
     np.random.seed(0)
     p=0.1
-    seeds = 10000
+    seeds = 100000
     max_t = 100
     run_t = 20
     times = np.arange(2, run_t-1)
