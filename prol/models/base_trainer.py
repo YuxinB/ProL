@@ -76,22 +76,23 @@ class BaseTrainer:
         )
 
         self.model.eval()
-        preds = []
-        truths = []
-        if verbose:
-            progress = tqdm(testloader)
-        else:
-            progress = testloader
-        for data, target in progress:
-            data = data.float().to(self.device)
-            target = target.long().to(self.device)
+        with torch.no_grad():
+            preds = []
+            truths = []
+            if verbose:
+                progress = tqdm(testloader)
+            else:
+                progress = testloader
+            for data, target in progress:
+                data = data.float().to(self.device)
+                target = target.long().to(self.device)
 
-            out = self.model(data)
+                out = self.model(data)
 
-            preds.extend(
-                out.detach().cpu().argmax(1).numpy()
-            )
-            truths.extend(
-                target.detach().cpu().numpy()
-            )
+                preds.extend(
+                    out.detach().cpu().argmax(1).numpy()
+                )
+                truths.extend(
+                    target.detach().cpu().numpy()
+                )
         return np.array(preds), np.array(truths)
