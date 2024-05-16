@@ -10,7 +10,11 @@ class BaseTrainer:
         self.args = args
 
         # dataloader
-        self.trainloader = DataLoader(dataset, batch_size=args.batchsize)
+        self.trainloader = get_dataloader(
+            dataset,
+            batchsize=args.batchsize,
+            train=True
+        )
 
         # model
         self.model = model
