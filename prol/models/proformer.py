@@ -39,7 +39,7 @@ class Model(nn.Module):
             [SelfAttention(d_model, num_heads, ff_hidden_dim) for _ in range(num_attn_blocks)]
         )
 
-        self.input_embedding = nn.Linear(input_size+1, d_model//2)
+        self.input_embedding = nn.Linear(input_size+num_classes, d_model//2)
         self.layernorm = nn.LayerNorm(normalized_shape=d_model, eps=1e-6)
         self.classifier = nn.Linear(d_model, num_classes)
 
@@ -73,7 +73,7 @@ class Model(nn.Module):
         return enc
         
     def forward(self, data, labels, times):
-        u = torch.cat((data, labels.unsqueeze(-1)), dim=-1)
+        u = torch.cat((data, labels), dim=-1)
         u = self.input_embedding(u)
 
         t = self.time_encoder(times)
@@ -186,10 +186,10 @@ class Trainer(BaseTrainer):
 
 if __name__ == "__main__":
     # testing
-    kwargs = model_defaults()
-    net = Model(num_classes=2, **kwargs)
-    data = torch.randn((64, 201, 28, 28))
-    labels = torch.randn((64, 201))
+    kwargs = model_defaults('mnist')
+    net = Model(num_classes=4, **kwargs)
+    data = torch.randn((64, 201, 28*28))
+    labels = torch.randn((64, 201, 4))
     times = torch.randn((64, 201))
     y = net(data, labels, times)
     print(y.shape)
