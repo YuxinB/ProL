@@ -285,7 +285,7 @@ def get_multi_sequence_indices(N, total_time_steps, tasklib, seed=1996, remove_t
     """
     tasklib = deepcopy(tasklib)
     num_tasks = len(tasklib)
-    unit = get_cycle(N, num_tasks)
+    unit = get_multi_cycle(N, num_tasks)
     pattern = np.array((unit * math.ceil(total_time_steps/(len(unit))))[:total_time_steps]).astype("int")
     seqInd = np.zeros((total_time_steps,)).astype('int')
 
