@@ -163,8 +163,6 @@ if __name__ == "__main__":
                      avg_pr - std_pr / np.sqrt(seeds),
                      avg_pr + std_pr / np.sqrt(seeds), alpha=0.2)
 
-
-
     plt.title("Dependent samples from Markov Chain")
     plt.xlabel("Number of samples / Time (t)")
     # plt.savefig("scenario3_avg.pdf", bbox_inches='tight')
