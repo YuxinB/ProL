@@ -148,7 +148,7 @@ def eval_mdp(pred, z_t):
 
 def main():
 
-    seeds = 1000
+    seeds = 100000
     run_t = 50
     max_t = run_t + 100
     times = np.arange(5, run_t-1)
@@ -173,6 +173,12 @@ def main():
 
     all_erm = np.array(all_erm)
     all_pr = np.array(all_pr)
+
+    info = {
+        'all_erm': all_erm,
+        'all_pr': all_pr,
+    }
+    np.save("scenario4_disc.npy", info, allow_pickle=True)
 
     plt.style.use("seaborn-v0_8-whitegrid")
     sns.set(context='poster',
