@@ -8,16 +8,15 @@ from tqdm.auto import tqdm
 import pickle
 
 import hydra
+from hydra.utils import get_original_cwd, to_absolute_path
 import logging
 
 from prol.process import (
-    get_cycle,
     get_torch_dataset,
-    get_task_indicies_and_map,
-    get_multi_indices_and_map,
-    get_sequence_indices
+    get_multi_indices_and_map
 )
-from prol.utils import get_dataloader
+
+import pathlib
 
 class SetParams:
     def __init__(self, dict) -> None:
@@ -36,14 +35,17 @@ log = logging.getLogger(__name__)
 
 @hydra.main(config_path=".", config_name="config")
 def main(cfg):
+    cwd = pathlib.Path(get_original_cwd())
+
     # input parameters
     params = {
         # dataset
         "dataset": "mnist",
-        "task": [[0, 1, 2], [2, 0], [3, 2, 0, 1]],    # task specification
+        "task": [[0, 1, 2], [1, 2, 3], [2, 3, 4]],    # task specification
+        "indices_file": 'mnist_16-02-38',
 
         # experiment
-        "method": "timecnn",         # select from {proformer, cnn, mlp, timecnn}
+        "method": "cnn",         # select from {proformer, cnn, mlp, timecnn}
         "N": 10,                     # time between two task switches                   
         "t": cfg.t,                  # training time
         "T": 5000,                   # future time horizon
@@ -74,7 +76,7 @@ def main(cfg):
         # training params
         "lr": 1e-3,         
         "batchsize": 64,
-        "epochs": 300,
+        "epochs": 500,
         "verbose": True
     }
     args = SetParams(params)
@@ -94,7 +96,7 @@ def main(cfg):
     )
 
     # load the saved indicies
-    indices_file = '/cis/home/adesilva/ashwin/research/ProL/experiments/vision_multi/indices/mnist_indices.pkl'
+    indices_file = cwd / f'indices/{args.indices_file}.pkl'
     with open(indices_file, 'rb') as f:
         total_indices = pickle.load(f)
 
