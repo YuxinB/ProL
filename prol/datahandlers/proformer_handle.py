@@ -29,7 +29,7 @@ class SyntheticSequentialDataset(Dataset):
     def __getitem__(self, idx):
         # trying
         r = np.random.randint(0, self.t-self.c-1) # select the start of the history
-        if self.args.conv_proformer["multihop"]:
+        if self.args.proformer["multihop"]:
             s = np.random.randint(r+self.c, self.t)  # select a 'future' datum
         else:
             s = r+self.c  # select the next datum
@@ -131,7 +131,7 @@ class VisionSequentialDataset(Dataset):
     def __getitem__(self, idx):
         # trying
         r = np.random.randint(0, self.t-self.c-1) # select the start of the history
-        if self.args.conv_proformer["multihop"]:
+        if self.args.proformer["multihop"]:
             s = np.random.randint(r+self.c, self.t)  # select a 'future' datum
         else:
             s = r+self.c  # select the next datum
