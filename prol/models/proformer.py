@@ -28,8 +28,7 @@ class SelfAttention(nn.Module):
         return out2
 
 class Model(nn.Module):
-    def __init__(self, input_size, d_model, num_heads, ff_hidden_dim, num_attn_blocks=1, num_classes=2, 
-                 contextlength=200, max_len=5000, encoding_type='freq'):
+    def __init__(self, input_size, d_model, num_heads, ff_hidden_dim, num_attn_blocks=1, num_classes=2, max_len=5000, encoding_type='freq'):
         super().__init__()
         self.input_size = input_size
         self.d_model = d_model
@@ -93,8 +92,7 @@ def model_defaults(dataset):
             "d_model": 256, 
             "num_heads": 8,
             "ff_hidden_dim": 1024,
-            "num_attn_blocks": 2, # try two layers
-            "contextlength": 200,
+            "num_attn_blocks": 2,
             "encoding_type": 'freq'
         }
     elif dataset == 'cifar-10':
@@ -103,8 +101,7 @@ def model_defaults(dataset):
             "d_model": 512, 
             "num_heads": 8,
             "ff_hidden_dim": 2048,
-            "num_attn_blocks": 4, # try two layers
-            "contextlength": 200,
+            "num_attn_blocks": 4,
             "encoding_type": 'freq'
         }
     elif dataset == 'synthetic':
@@ -113,8 +110,7 @@ def model_defaults(dataset):
             "d_model": 256, 
             "num_heads": 8,
             "ff_hidden_dim": 1024,
-            "num_attn_blocks": 2, # try two layers
-            "contextlength": 200,
+            "num_attn_blocks": 2,
             "encoding_type": 'freq'
         }
     else:

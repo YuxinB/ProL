@@ -10,11 +10,12 @@ class BaseTrainer:
         self.args = args
 
         # dataloader
-        self.trainloader = get_dataloader(
-            dataset,
-            batchsize=args.batchsize,
-            train=True
-        )
+        if args.t > 0:
+            self.trainloader = get_dataloader(
+                dataset,
+                batchsize=args.batchsize,
+                train=True
+            )
 
         # model
         self.model = model
@@ -31,10 +32,11 @@ class BaseTrainer:
         )
 
         # learning rate schedule
-        self.scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
-            optimizer=self.optimizer,
-            T_max=args.epochs * len(self.trainloader)
-        )
+        if args.t > 0:
+            self.scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
+                optimizer=self.optimizer,
+                T_max=args.epochs * len(self.trainloader)
+            )
 
         # loss function
         self.criterion = nn.CrossEntropyLoss()

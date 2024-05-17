@@ -92,7 +92,7 @@ class Model(nn.Module):
         self.max_len = max_len
         self.d_model = d_model
         self.time_ffn = nn.Sequential(
-            nn.Linear(d_model, nChannels[0]),
+            nn.Linear(d_model, nChannels[1]),
             nn.ReLU()
         )
 
@@ -140,8 +140,8 @@ class Model(nn.Module):
         t = t[..., None, None]
 
         out = self.conv1(x)
-        out = out + t
         out = self.block1(out)
+        out = out + t
         out = self.block2(out)
         out = self.block3(out)
         out = self.relu(self.bn1(out))

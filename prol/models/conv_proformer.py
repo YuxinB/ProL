@@ -31,11 +31,11 @@ class SelfAttention(nn.Module):
         return out2
 
 class Model(nn.Module):
-    def __init__(self, input_size, d_model, num_heads, ff_hidden_dim, num_attn_blocks=1, num_classes=2, 
-                 contextlength=200, max_len=5000):
+    def __init__(self, input_size, d_model, num_heads, ff_hidden_dim, num_attn_blocks=1, num_classes=2, max_len=5000, encoding_type='freq'):
         super().__init__()
         self.input_size = input_size
         self.d_model = d_model
+        self.max_len = max_len
 
         self.attention_blocks = nn.ModuleList(
             [SelfAttention(d_model, num_heads, ff_hidden_dim) for _ in range(num_attn_blocks)]
@@ -45,30 +45,64 @@ class Model(nn.Module):
         self.layernorm = nn.LayerNorm(normalized_shape=d_model, eps=1e-6)
         self.classifier = nn.Linear(d_model, num_classes)
 
-        # frequency-adjusted fourier encoding
-        position = torch.arange(max_len).unsqueeze(1)
-        div_term = 2 * math.pi / torch.arange(2, d_model//2 + 1, 2)
-        ffe = torch.zeros(1, max_len, d_model//2)
-        ffe[0, :, 0::2] = torch.sin(position * div_term)
-        ffe[0, :, 1::2] = torch.cos(position * div_term)
-        self.register_buffer('ffe', ffe)
+        if encoding_type == 'vanilla':
+            pe = self.get_vanilla_encoding()
+        elif encoding_type == 'freq':
+            pe = self.get_freq_encoding()
+        else:
+            raise NotImplementedError
+        self.register_buffer('pe', pe)
 
         # featurizer
-        featurizer_kwargs = feature_model_defaults('cifar-10')
-        model = FeatureModel(**featurizer_kwargs)
+        # featurizer_kwargs = feature_model_defaults('cifar-10')
+        # model = FeatureModel(**featurizer_kwargs)
+        # self.featurizer = nn.Sequential(
+        #     *list(model.children())[:-1]
+        # )
         self.featurizer = nn.Sequential(
-            *list(model.children())[:-1]
+            nn.Conv2d(3, 80, kernel_size=3, bias=False),
+            nn.ReLU(),
+            nn.MaxPool2d(2),
+            
+            nn.Conv2d(80, 80, kernel_size=3),
+            nn.BatchNorm2d(80),
+            nn.ReLU(),
+            nn.MaxPool2d(2),
+
+            nn.Conv2d(80, 80, kernel_size=3),
+            nn.BatchNorm2d(80),
+            nn.ReLU(),
+            nn.MaxPool2d(2),
+
+            nn.Flatten(1, -1)
         )
+
+    def get_vanilla_encoding(self):
+        C = 10000
+        position = torch.arange(self.max_len).unsqueeze(1)
+        div_term = torch.exp(torch.arange(0, self.d_model//2, 2) * (-math.log(C) / (self.d_model//2)))
+        pe = torch.zeros(1, self.max_len, self.d_model//2)
+        pe[0, :, 0::2] = torch.sin(position * div_term)
+        pe[0, :, 1::2] = torch.cos(position * div_term)
+        return pe
+    
+    def get_freq_encoding(self):
+        position = torch.arange(self.max_len).unsqueeze(1)
+        div_term = 2 * math.pi / torch.arange(2, self.d_model//2 + 1, 2)
+        ffe = torch.zeros(1, self.max_len, self.d_model//2)
+        ffe[0, :, 0::2] = torch.sin(position * div_term)
+        ffe[0, :, 1::2] = torch.cos(position * div_term)
+        return ffe
         
     def time_encoder(self, t):
-        enc = torch.cat([self.ffe[:, t[i].squeeze().long(), :] for i in range(t.size(0))])
+        enc = torch.cat([self.pe[:, t[i].squeeze().long(), :] for i in range(t.size(0))])
         return enc
 
     def forward(self, data, labels, times):  
         data = data.permute(0, 1, 4, 2, 3)
         x = torch.stack([self.featurizer(datum).squeeze() for datum in data], axis=0)
 
-        u = torch.cat((x, labels.unsqueeze(-1)), dim=-1)
+        u = torch.cat((x, labels), dim=-1)
         u = self.input_embedding(u)
 
         t = self.time_encoder(times)
@@ -85,20 +119,20 @@ def model_defaults(dataset):
     if dataset == 'mnist':
         return { 
             "input_size": 28*28,
-            "d_model": 512, 
-            "num_heads": 8,
-            "ff_hidden_dim": 2048,
-            "num_attn_blocks": 4,
-            "contextlength": 200
-        }
-    elif dataset == 'cifar-10':
-        return { 
-            "input_size": 32,
             "d_model": 256, 
             "num_heads": 8,
             "ff_hidden_dim": 1024,
-            "num_attn_blocks": 2, 
-            "contextlength": 200
+            "num_attn_blocks": 2,
+            "encoding_type": 'freq'
+        }
+    elif dataset == 'cifar-10':
+        return { 
+            "input_size": 320,
+            "d_model": 256, 
+            "num_heads": 8,
+            "ff_hidden_dim": 1024,
+            "num_attn_blocks": 2,
+            "encoding_type": 'freq'
         }
     else:
         raise NotImplementedError
@@ -177,7 +211,7 @@ if __name__ == "__main__":
     net.to(device)
 
     data = torch.randn((16, 201, 32, 32, 3)).to(device)
-    labels = torch.randn((16, 201)).to(device)
+    labels = torch.randn((16, 201, 1)).to(device)
     times = torch.randn((16, 201)).to(device)
 
     y = net(data, labels, times)
