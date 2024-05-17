@@ -302,6 +302,74 @@ def get_multi_sequence_indices(N, total_time_steps, tasklib, seed=1996, remove_t
     else:
         return seqInd
 
+# Vision (Markov)
+def get_markov_chain(num_tasks, T, N, seed):
+    """
+    Get the task sequence sampled according to a Markov chain.
+    (The transition matrix is currently hard-coded for 3 states/tasks)
+
+    Parameters
+    ----------
+    num_tasks : number of different tasks/states
+    T : total length of the task sequence
+    N : repeating number
+    seed : random seed
+    """
+    P = np.array([
+        [0.2, 0.7, 0.1],
+        [0.5, 0.3, 0.2],
+        [0.3, 0.3, 0.4]
+        ])
+    initial_state_distro = np.array([1./num_tasks] * num_tasks)
+    state_distros = np.array(
+        [initial_state_distro.dot(np.linalg.matrix_power(P, l)) for l in range(T//N)]
+        )
+    np.random.seed(seed)
+    pattern = np.array(
+        [np.random.choice(num_tasks, 1, p=state_distros[l]) for l in range(T//N)]
+        ).squeeze()
+    full_pattern = np.repeat(pattern, N)
+    return full_pattern
+
+def get_markov_sequence_indices(full_pattern, t, tasklib, seed=1996, train=False):
+    """Get indices for a sequence drawn from the stochastic process
+
+    Parameters
+    ----------
+    N : time between two task switches
+    total_time_steps : length of the sequence drawn
+    tasklib : original task indices
+    seed : random seed
+
+    Returns
+    -------
+    index sequence
+    """
+    tasklib = deepcopy(tasklib)
+    num_tasks = len(tasklib)
+    T = len(full_pattern)
+
+    if train:
+        pattern = full_pattern[:t]
+        seqInd = np.zeros((t,)).astype('int')
+    else:
+        pattern = full_pattern[t:]
+        seqInd = np.zeros((T-t,)).astype('int')
+    
+    np.random.seed(seed)
+    for taskid in range(num_tasks):
+        seqInd[pattern==taskid] = np.random.choice(tasklib[taskid], sum(pattern==taskid), replace=False)
+
+    if train:
+        for taskid in range(num_tasks):
+            tasklib[taskid] = list(
+                set(tasklib[taskid]) - set(tasklib[taskid]).intersection(seqInd)
+            ) 
+        return seqInd, tasklib
+    else:
+        return seqInd
+
+
 if __name__ == "__main__":
     x, y = get_synthetic_data(20, 100)
     print(x.shape)
