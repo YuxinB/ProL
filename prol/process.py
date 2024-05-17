@@ -73,7 +73,7 @@ def get_synthetic_data(N, total_time_steps, seed=1996):
 
 # vision data
 def get_torch_dataset(root, name='mnist'):
-    """Get the original torch datase
+    """Get the original torch datasets (pixel values normalized in [-1, 1])
 
     Returns
     -------
