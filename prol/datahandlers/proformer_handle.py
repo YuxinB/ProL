@@ -19,7 +19,7 @@ class SyntheticSequentialDataset(Dataset):
         self.args = args
         self.data = x
         self.targets = y
-        self.contextlength = args.proformer['contextlength']
+        self.c = args.proformer['contextlength']
         self.t = len(y)
         self.time = torch.arange(self.t).float()
 
@@ -27,13 +27,19 @@ class SyntheticSequentialDataset(Dataset):
         return len(self.targets)
 
     def __getitem__(self, idx):
-        r = np.random.randint(0, self.t-2*self.contextlength) # select the start of the history
-        if self.args.proformer["multihop"]:
-            s = np.random.randint(r+self.contextlength, r+2*self.contextlength)  # select a 'future' datum
+        # trying
+        r = np.random.randint(0, self.t-self.c-1) # select the start of the history
+        if self.args.conv_proformer["multihop"]:
+            s = np.random.randint(r+self.c, self.t)  # select a 'future' datum
         else:
-            s = r+self.contextlength  # select the next datum
+            s = r+self.c  # select the next datum
+        # r = np.random.randint(0, self.t-2*self.contextlength) # select the start of the history
+        # if self.args.proformer["multihop"]:
+        #     s = np.random.randint(r+self.contextlength, r+2*self.contextlength)  # select a 'future' datum
+        # else:
+        #     s = r+self.contextlength  # select the next datum
 
-        id = list(range(r, r+self.contextlength)) + [s]
+        id = list(range(r, r+self.contextlcength)) + [s]
 
         data = self.data[id].unsqueeze(-1)
         labels = self.targets[id]
@@ -111,7 +117,7 @@ class VisionSequentialDataset(Dataset):
         """
         self.args = args
         self.dataset = dataset
-        self.contextlength = args.proformer["contextlength"]
+        self.c = args.proformer["contextlength"]
         self.t = len(seqInd)
         self.time = torch.arange(self.t).float()
         self.seqInd = seqInd
@@ -123,13 +129,19 @@ class VisionSequentialDataset(Dataset):
         return len(self.seqInd)
 
     def __getitem__(self, idx):
-        r = np.random.randint(0, len(self.seqInd)-2*self.contextlength) # select the start of the history
-        if self.args.proformer["multihop"]:
-            s = np.random.randint(r+self.contextlength, r+2*self.contextlength)  # select a 'future' datum
+        # trying
+        r = np.random.randint(0, self.t-self.c-1) # select the start of the history
+        if self.args.conv_proformer["multihop"]:
+            s = np.random.randint(r+self.c, self.t)  # select a 'future' datum
         else:
-            s = r+self.contextlength  # select the next datum
+            s = r+self.c  # select the next datum
+        # r = np.random.randint(0, len(self.seqInd)-2*self.contextlength) # select the start of the history
+        # if self.args.proformer["multihop"]:
+        #     s = np.random.randint(r+self.contextlength, r+2*self.contextlength)  # select a 'future' datum
+        # else:
+        #     s = r+self.contextlength  # select the next datum
 
-        id = list(range(r, r+self.contextlength)) + [s]
+        id = list(range(r, r+self.c)) + [s]
         dataid = self.seqInd[id] # get indices for the context window
 
         data = self.dataset.data[dataid]
