@@ -1,8 +1,6 @@
 import torch
 from torch.utils.data import Dataset
-import torch.nn as nn
-from torchvision.models import resnet18, ResNet18_Weights
-
+import torch.nn.functional as F
 import numpy as np
 
 class VisionSequentialDataset(Dataset):
@@ -28,6 +26,8 @@ class VisionSequentialDataset(Dataset):
         self.seqInd = seqInd
         self.maplab = maplab
 
+        self.max_num_classes = max([len(task) for task in args.task])
+
     def __len__(self):
         return len(self.seqInd)
 
@@ -43,11 +43,17 @@ class VisionSequentialDataset(Dataset):
 
         data = self.dataset.data[dataid]
 
-        labels = self.dataset.targets[dataid].apply_(self.maplab)
         time = self.time[id]
-        
+
+        labels = self.dataset.targets[dataid].apply_(self.maplab)
         target = labels[-1].clone() # true label of the future datum
-        labels[-1] = np.random.binomial(1, 0.5) # replace the true label of the future datum with a random label
+
+        if self.max_num_classes > 2:
+            labels = F.one_hot(labels, self.max_num_classes)
+            labels[-1, :] = 0
+        else:
+            labels[-1] = 0 # replace the true label of the future datum with a fixed label
+            labels = labels.unsqueeze(-1)
 
         return data, time, labels, target
     
@@ -77,6 +83,8 @@ class VisionSequentialTestDataset(Dataset):
         
         self.train_time = torch.arange(t).float()
         self.test_time = torch.arange(t, t + len(test_seqInd)).float()
+
+        self.max_num_classes = max([len(task) for task in args.task])
         
     def __len__(self):
         return len(self.test_seqInd)
@@ -86,13 +94,19 @@ class VisionSequentialTestDataset(Dataset):
 
         data = self.dataset.data[dataid]
 
-        labels = self.dataset.targets[dataid].apply_(self.maplab)
         time = torch.cat([
             self.train_time[-self.contextlength:], 
             self.test_time[idx].view(1)
         ])
 
+        labels = self.dataset.targets[dataid].apply_(self.maplab)
         target = labels[-1].clone() # true label of the future datum
-        labels[-1] = np.random.binomial(1, 0.5) # replace the true label of the future datum with a random label
+
+        if self.max_num_classes > 2:
+            labels = F.one_hot(labels, self.max_num_classes)
+            labels[-1, :] = 0
+        else:
+            labels[-1] = 0 # replace the true label of the future datum with a fixed label
+            labels = labels.unsqueeze(-1)
 
         return data, time, labels, target

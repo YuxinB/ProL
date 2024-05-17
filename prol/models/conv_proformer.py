@@ -41,7 +41,7 @@ class Model(nn.Module):
             [SelfAttention(d_model, num_heads, ff_hidden_dim) for _ in range(num_attn_blocks)]
         )
 
-        self.input_embedding = nn.Linear(input_size+1, d_model//2)
+        self.input_embedding = nn.Linear(input_size+num_classes, d_model//2)
         self.layernorm = nn.LayerNorm(normalized_shape=d_model, eps=1e-6)
         self.classifier = nn.Linear(d_model, num_classes)
 
