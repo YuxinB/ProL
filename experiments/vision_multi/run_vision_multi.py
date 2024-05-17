@@ -40,9 +40,9 @@ def main(cfg):
     # input parameters
     params = {
         # dataset
-        "dataset": "cifar-10",
+        "dataset": "mnist",
         "task": [[0, 1, 2], [1, 2, 3], [2, 3, 4]],    # task specification
-        "indices_file": 'cifar-10_02-12-13', #'mnist_00-51-47',
+        "indices_file": 'mnist_00-51-47', #'cifar-10_02-12-13',
 
         # experiment
         "method": cfg.method,         # select from {proformer, cnn, mlp, timecnn}
@@ -56,16 +56,16 @@ def main(cfg):
        
         # proformer
         "proformer" : {
-            "contextlength": 50, 
+            "contextlength": 50 if cfg.t < 500 else 200, 
             "encoding_type": 'freq',      
-            "multihop": True
+            "multihop": False
         },
 
         # conv_proformer
         "conv_proformer" : {
-            "contextlength": 50, 
+            "contextlength": 50 if cfg.t < 500 else 80, 
             "encoding_type": 'freq',      
-            "multihop": True
+            "multihop": False
         },
 
         # timecnn
@@ -80,7 +80,7 @@ def main(cfg):
               
         # training params
         "lr": 1e-3,         
-        "batchsize": 32,
+        "batchsize": 64,
         "epochs": 500,
         "verbose": True
     }

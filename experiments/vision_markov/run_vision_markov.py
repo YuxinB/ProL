@@ -42,7 +42,7 @@ def main(cfg):
         # dataset
         "dataset": "mnist",
         "task": [[0, 1, 2], [1, 2, 3], [2, 3, 4]],    # task specification
-        "indices_file": 'mnist_00-51-47', #'cifar-10_02-12-13',
+        "indices_file": 'mnist_16-41-46',
 
         # experiment
         "method": cfg.method,         # select from {proformer, cnn, mlp, timecnn}
