@@ -42,7 +42,7 @@ def main(cfg):
         # dataset
         "dataset": "mnist",
         "task": [[0, 1, 2], [1, 2, 3], [2, 3, 4]],    # task specification
-        "indices_file": 'mnist_16-41-46',
+        "indices_file": 'mnist_17-14-30',
 
         # experiment
         "method": cfg.method,         # select from {proformer, cnn, mlp, timecnn}
@@ -58,14 +58,14 @@ def main(cfg):
         "proformer" : {
             "contextlength": 50 if cfg.t < 500 else 200, 
             "encoding_type": 'freq',      
-            "multihop": False
+            "multihop": True
         },
 
         # conv_proformer
         "conv_proformer" : {
             "contextlength": 50 if cfg.t < 500 else 80, 
             "encoding_type": 'freq',      
-            "multihop": False
+            "multihop": True
         },
 
         # timecnn

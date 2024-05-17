@@ -353,8 +353,8 @@ def get_markov_sequence_indices(full_pattern, t, tasklib, seed=1996, train=False
         pattern = full_pattern[:t]
         seqInd = np.zeros((t,)).astype('int')
     else:
-        pattern = full_pattern[t:]
-        seqInd = np.zeros((T-t,)).astype('int')
+        pattern = full_pattern
+        seqInd = np.zeros((T,)).astype('int')
     
     np.random.seed(seed)
     for taskid in range(num_tasks):
