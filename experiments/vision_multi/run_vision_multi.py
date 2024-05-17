@@ -40,17 +40,17 @@ def main(cfg):
     # input parameters
     params = {
         # dataset
-        "dataset": "mnist",
+        "dataset": "cifar-10",
         "task": [[0, 1, 2], [1, 2, 3], [2, 3, 4]],    # task specification
-        "indices_file": 'mnist_16-02-38',
+        "indices_file": 'cifar-10_02-12-13', # 'mnist_00-51-47',
 
         # experiment
-        "method": "cnn",         # select from {proformer, cnn, mlp, timecnn}
+        "method": cfg.method,         # select from {proformer, cnn, mlp, timecnn}
         "N": 10,                     # time between two task switches                   
         "t": cfg.t,                  # training time
         "T": 5000,                   # future time horizon
         "seed": 1996,   
-        "device": "cuda:0",          # device
+        "device": cfg.device,          # device
         "reps": 100,                 # number of test reps
         "outer_reps": 3,         
        
@@ -72,11 +72,16 @@ def main(cfg):
         "timecnn": {
             "encoding_type": 'freq', 
         },
+
+        # timeresnet
+        "timeresnet": {
+            "encoding_type": 'freq', 
+        },
               
         # training params
         "lr": 1e-3,         
-        "batchsize": 64,
-        "epochs": 500,
+        "batchsize": 32,
+        "epochs": 1000,
         "verbose": True
     }
     args = SetParams(params)
@@ -86,7 +91,7 @@ def main(cfg):
     max_num_classes = max([len(task) for task in args.task])
 
     # get source dataset
-    root = '/cis/home/adesilva/ashwin/research/ProL/data'
+    root = '/home/ubuntu/ProL/data'
     torch_dataset = get_torch_dataset(root, name=args.dataset)
     
     # get indices for each task
@@ -114,19 +119,26 @@ def main(cfg):
         method, datahandler = get_modules(args.method)
 
         # form the train dataset
-        data_kwargs = {
-            "dataset": torch_dataset, 
-            "seqInd": train_SeqInd, 
-            "maplab": maplab
-        }
-        train_dataset = datahandler.VisionSequentialDataset(args, **data_kwargs)
+        if args.t > 0:
+            data_kwargs = {
+                "dataset": torch_dataset, 
+                "seqInd": train_SeqInd, 
+                "maplab": maplab
+            }
+            train_dataset = datahandler.VisionSequentialDataset(args, **data_kwargs)
+        else:
+            # when the model doesn't see any training data at all
+            if args.method in ['proformer', 'conv_proformer']:
+                # set a random context
+                train_SeqInd = test_seqInds[np.random.randint(args.reps)][
+                    np.random.randint(args.T, size=params[args.method]['contextlength'])
+                ]
+            train_dataset = [] 
 
         # model
         model_kwargs = method.model_defaults(args.dataset)
-        if args.method == 'proformer':
-            model_kwargs['encoding_type'] = args.proformer['encoding_type']
-        elif args.method == 'timecnn':
-            model_kwargs['encoding_type'] = args.timecnn['encoding_type']
+        if args.method in ['proformer', 'conv_proformer', 'timecnn', 'timeresnet']:
+            model_kwargs['encoding_type'] = params[args.method]['encoding_type']
         log.info(f'{model_kwargs}')
         model = method.Model(
             num_classes=max_num_classes,
@@ -135,7 +147,8 @@ def main(cfg):
         
         # train
         trainer = method.Trainer(model, train_dataset, args)
-        trainer.fit(log)
+        if args.t > 0:
+            trainer.fit(log)
 
         # evaluate
         preds = []
