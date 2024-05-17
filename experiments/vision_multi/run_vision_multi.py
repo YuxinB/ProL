@@ -42,7 +42,7 @@ def main(cfg):
         # dataset
         "dataset": "cifar-10",
         "task": [[0, 1, 2], [1, 2, 3], [2, 3, 4]],    # task specification
-        "indices_file": 'cifar-10_02-12-13', # 'mnist_00-51-47',
+        "indices_file": 'cifar-10_02-12-13', #'mnist_00-51-47',
 
         # experiment
         "method": cfg.method,         # select from {proformer, cnn, mlp, timecnn}
@@ -56,14 +56,14 @@ def main(cfg):
        
         # proformer
         "proformer" : {
-            "contextlength": 200, 
+            "contextlength": 50, 
             "encoding_type": 'freq',      
             "multihop": True
         },
 
         # conv_proformer
         "conv_proformer" : {
-            "contextlength": 100, 
+            "contextlength": 50, 
             "encoding_type": 'freq',      
             "multihop": True
         },
@@ -81,7 +81,7 @@ def main(cfg):
         # training params
         "lr": 1e-3,         
         "batchsize": 32,
-        "epochs": 1000,
+        "epochs": 500,
         "verbose": True
     }
     args = SetParams(params)
