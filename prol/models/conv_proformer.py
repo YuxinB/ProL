@@ -53,12 +53,6 @@ class Model(nn.Module):
             raise NotImplementedError
         self.register_buffer('pe', pe)
 
-        # featurizer
-        # featurizer_kwargs = feature_model_defaults('cifar-10')
-        # model = FeatureModel(**featurizer_kwargs)
-        # self.featurizer = nn.Sequential(
-        #     *list(model.children())[:-1]
-        # )
         self.featurizer = nn.Sequential(
             nn.Conv2d(3, 80, kernel_size=3, bias=False),
             nn.ReLU(),
@@ -100,7 +94,11 @@ class Model(nn.Module):
 
     def forward(self, data, labels, times):  
         data = data.permute(0, 1, 4, 2, 3)
-        x = torch.stack([self.featurizer(datum).squeeze() for datum in data], axis=0)
+
+        shape_ = data.shape
+        data = data.flatten(0, 1)
+        x = self.featurizer(data).squeeze() 
+        x = x.view(shape_[0], shape_[1], -1)
 
         u = torch.cat((x, labels), dim=-1)
         u = self.input_embedding(u)
