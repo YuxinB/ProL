@@ -6,29 +6,26 @@ import numpy as np
 from tqdm.auto import tqdm
 from ..utils import get_dataloader
 from .base_trainer import BaseTrainer
-from .resnet import Model as FeatureModel
-from .resnet import model_defaults as feature_model_defaults
 
-
-class SelfAttention(nn.Module):
-    def __init__(self, d_model, num_heads, hidden_dim, p=0.1):
-        super().__init__()
+# class SelfAttention(nn.Module):
+#     def __init__(self, d_model, num_heads, hidden_dim, p=0.1):
+#         super().__init__()
         
-        self.feed_forward = nn.Sequential(
-            nn.Linear(d_model, hidden_dim, p),
-            nn.ReLU(),
-            nn.Linear(hidden_dim, d_model, p),
-        )
-        self.mha = nn.MultiheadAttention(d_model, num_heads, p, batch_first=True)
-        self.layernorm1 = nn.LayerNorm(normalized_shape=d_model, eps=1e-6)
-        self.layernorm2 = nn.LayerNorm(normalized_shape=d_model, eps=1e-6)
+#         self.feed_forward = nn.Sequential(
+#             nn.Linear(d_model, hidden_dim, p),
+#             nn.ReLU(),
+#             nn.Linear(hidden_dim, d_model, p),
+#         )
+#         self.mha = nn.MultiheadAttention(d_model, num_heads, p, batch_first=True)
+#         self.layernorm1 = nn.LayerNorm(normalized_shape=d_model, eps=1e-6)
+#         self.layernorm2 = nn.LayerNorm(normalized_shape=d_model, eps=1e-6)
 
-    def forward(self, x):
-        attn_output, _ = self.mha(x, x, x)
-        out1 = self.layernorm1(x + attn_output)
-        ff_output = self.feed_forward(out1)
-        out2 = self.layernorm2(out1 + ff_output)
-        return out2
+#     def forward(self, x):
+#         attn_output, _ = self.mha(x, x, x)
+#         out1 = self.layernorm1(x + attn_output)
+#         ff_output = self.feed_forward(out1)
+#         out2 = self.layernorm2(out1 + ff_output)
+#         return out2
 
 class Model(nn.Module):
     def __init__(self, input_size, d_model, num_heads, ff_hidden_dim, num_attn_blocks=1, num_classes=2, max_len=5000, encoding_type='freq'):
@@ -36,22 +33,6 @@ class Model(nn.Module):
         self.input_size = input_size
         self.d_model = d_model
         self.max_len = max_len
-
-        self.attention_blocks = nn.ModuleList(
-            [SelfAttention(d_model, num_heads, ff_hidden_dim) for _ in range(num_attn_blocks)]
-        )
-
-        self.input_embedding = nn.Linear(input_size+num_classes, d_model//2)
-        self.layernorm = nn.LayerNorm(normalized_shape=d_model, eps=1e-6)
-        self.classifier = nn.Linear(d_model, num_classes)
-
-        if encoding_type == 'vanilla':
-            pe = self.get_vanilla_encoding()
-        elif encoding_type == 'freq':
-            pe = self.get_freq_encoding()
-        else:
-            raise NotImplementedError
-        self.register_buffer('pe', pe)
 
         self.featurizer = nn.Sequential(
             nn.Conv2d(3, 80, kernel_size=3, bias=False),
@@ -70,6 +51,33 @@ class Model(nn.Module):
 
             nn.Flatten(1, -1)
         )
+
+        if encoding_type == 'vanilla':
+            pe = self.get_vanilla_encoding()
+        elif encoding_type == 'freq':
+            pe = self.get_freq_encoding()
+        else:
+            raise NotImplementedError
+        self.register_buffer('pe', pe)
+
+        self.input_embedding = nn.Linear(input_size+num_classes, d_model//2)
+        
+        # self.attention_blocks = nn.ModuleList(
+        #     [SelfAttention(d_model, num_heads, ff_hidden_dim) for _ in range(num_attn_blocks)]
+        # )
+
+        encoder_layer = nn.TransformerEncoderLayer(
+            d_model=d_model,
+            nhead=num_heads,
+            dim_feedforward=ff_hidden_dim,
+            batch_first=True
+        )
+        self.transformer = nn.TransformerEncoder(
+            encoder_layer=encoder_layer,
+            num_layers=2
+        )
+
+        self.classifier = nn.Linear(d_model, num_classes)
 
     def get_vanilla_encoding(self):
         C = 10000
@@ -107,9 +115,14 @@ class Model(nn.Module):
 
         x = torch.cat((u, t), dim=-1)
 
-        for attn_block in self.attention_blocks:
-            x = attn_block(x)
-        x = torch.select(x, 1, -1)
+        # for attn_block in self.attention_blocks:
+        #     x = attn_block(x)
+
+        x = self.transformer(
+            src=x
+        )
+
+        x = x[:, 0]
         x = self.classifier(x)
         return x
     
@@ -205,12 +218,12 @@ if __name__ == "__main__":
     device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
 
     kwargs = model_defaults("cifar-10")
-    net = Model(num_classes=2, **kwargs)
+    net = Model(num_classes=4, **kwargs)
     net.to(device)
 
-    data = torch.randn((16, 201, 32, 32, 3)).to(device)
-    labels = torch.randn((16, 201, 1)).to(device)
-    times = torch.randn((16, 201)).to(device)
+    data = torch.randn((1, 201, 32, 32, 3)).to(device)
+    labels = torch.randn((1, 201, 4)).to(device)
+    times = torch.arange(201).view(1, -1).to(device)
 
     y = net(data, labels, times)
     print(y.shape)
