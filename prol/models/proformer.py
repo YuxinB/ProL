@@ -7,25 +7,25 @@ from tqdm.auto import tqdm
 from ..utils import get_dataloader
 from .base_trainer import BaseTrainer
 
-class SelfAttention(nn.Module):
-    def __init__(self, d_model, num_heads, hidden_dim, p=0.1):
-        super().__init__()
+# class SelfAttention(nn.Module):
+#     def __init__(self, d_model, num_heads, hidden_dim, p=0.1):
+#         super().__init__()
         
-        self.feed_forward = nn.Sequential(
-            nn.Linear(d_model, hidden_dim, p),
-            nn.ReLU(),
-            nn.Linear(hidden_dim, d_model, p),
-        )
-        self.mha = nn.MultiheadAttention(d_model, num_heads, p, batch_first=True)
-        self.layernorm1 = nn.LayerNorm(normalized_shape=d_model, eps=1e-6)
-        self.layernorm2 = nn.LayerNorm(normalized_shape=d_model, eps=1e-6)
+#         self.feed_forward = nn.Sequential(
+#             nn.Linear(d_model, hidden_dim, p),
+#             nn.ReLU(),
+#             nn.Linear(hidden_dim, d_model, p),
+#         )
+#         self.mha = nn.MultiheadAttention(d_model, num_heads, p, batch_first=True)
+#         self.layernorm1 = nn.LayerNorm(normalized_shape=d_model, eps=1e-6)
+#         self.layernorm2 = nn.LayerNorm(normalized_shape=d_model, eps=1e-6)
 
-    def forward(self, x):
-        attn_output, _ = self.mha(x, x, x)
-        out1 = self.layernorm1(x + attn_output)
-        ff_output = self.feed_forward(out1)
-        out2 = self.layernorm2(out1 + ff_output)
-        return out2
+#     def forward(self, x):
+#         attn_output, _ = self.mha(x, x, x)
+#         out1 = self.layernorm1(x + attn_output)
+#         ff_output = self.feed_forward(out1)
+#         out2 = self.layernorm2(out1 + ff_output)
+#         return out2
 
 class Model(nn.Module):
     def __init__(self, input_size, d_model, num_heads, ff_hidden_dim, num_attn_blocks=1, num_classes=2, max_len=5000, encoding_type='freq'):

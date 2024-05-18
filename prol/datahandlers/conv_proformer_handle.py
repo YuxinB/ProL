@@ -38,12 +38,6 @@ class VisionSequentialDataset(Dataset):
             s = np.random.randint(r+self.c, self.t)  # select a 'future' datum
         else:
             s = r+self.c  # select the next datum
-        # old
-        # r = np.random.randint(0, len(self.seqInd)-2*self.contextlength) # select the start of the history
-        # if self.args.conv_proformer["multihop"]:
-        #     s = np.random.randint(r+self.contextlength, r+2*self.contextlength)  # select a 'future' datum
-        # else:
-        #     s = r+self.contextlength  # select the next datum
 
         id = list(range(r, r+self.c)) + [s]
         dataid = self.seqInd[id] # get indices for the context window
@@ -55,12 +49,8 @@ class VisionSequentialDataset(Dataset):
         labels = self.dataset.targets[dataid].apply_(self.maplab)
         target = labels[-1].clone() # true label of the future datum
 
-        if self.max_num_classes > 2:
-            labels = F.one_hot(labels, self.max_num_classes)
-            labels[-1, :] = 0
-        else:
-            labels[-1] = 0 # replace the true label of the future datum with a fixed label
-            labels = labels.unsqueeze(-1)
+        labels = F.one_hot(labels, self.max_num_classes)
+        labels[-1, :] = 0 
 
         return data, time, labels, target
     
@@ -109,11 +99,7 @@ class VisionSequentialTestDataset(Dataset):
         labels = self.dataset.targets[dataid].apply_(self.maplab)
         target = labels[-1].clone() # true label of the future datum
 
-        if self.max_num_classes > 2:
-            labels = F.one_hot(labels, self.max_num_classes)
-            labels[-1, :] = 0
-        else:
-            labels[-1] = 0 # replace the true label of the future datum with a fixed label
-            labels = labels.unsqueeze(-1)
+        labels = F.one_hot(labels, self.max_num_classes)
+        labels[-1, :] = 0
 
         return data, time, labels, target
