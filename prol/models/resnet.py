@@ -98,11 +98,19 @@ class Model(nn.Module):
     
 def model_defaults(dataset):
     if dataset == 'cifar-10':
+        # return {
+        #     "depth": 10,
+        #     "base_chans": 4, 
+        #     "input_chans": 3,
+        #     "widen_factor": 2,
+        #     "dropRate": 0
+        # }
+        # new params
         return {
-            "depth": 10,
-            "base_chans": 4, 
+            "depth": 16,
+            "base_chans": 16, 
             "input_chans": 3,
-            "widen_factor": 2,
+            "widen_factor": 4,
             "dropRate": 0
         }
     else:
