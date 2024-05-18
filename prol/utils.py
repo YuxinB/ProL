@@ -18,7 +18,8 @@ def get_dataloader(dataset, batchsize, train=True):
     loader_kwargs = {
             'worker_init_fn': wif,
             'pin_memory': True,
-            'num_workers': 4
+            'num_workers': 4,
+            'multiprocessing_context':'fork'
     }
     loader = DataLoader(
                 dataset, 
@@ -47,7 +48,8 @@ def log_exp_config(log, args, params):
     log.info('\n')
 
     log.info(f'Method details:')
-    log.info(f'{params[args.method]}')
+    if args.method in ['proformer', 'conv_proformer', 'timecnn', 'timeresnet']:
+        log.info(f'{params[args.method]}') 
     log.info('\n')
 
     log.info(f'Training details:')
