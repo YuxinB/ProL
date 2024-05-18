@@ -130,7 +130,7 @@ if __name__ == "__main__":
         'std_pr': std_pr,
     }
     if DISC:
-        np.save("scenario3_disc.npy", info, allow_pickle=True)
+        np.save("scenario3_disc_4.npy", info, allow_pickle=True)
     else:
         np.save("scenario3_avg.npy", info, allow_pickle=True)
 
@@ -147,7 +147,8 @@ if __name__ == "__main__":
                     'Bayes risk'
                    ])
     else:
-        bayes_err = 0.35314
+        # bayes_err = 0.357
+        bayes_err = 1. / 6
         plt.plot(times, np.ones_like(times) * bayes_err, '--', label='Bayes Optimal', color='black')
         plt.ylabel("Discounted Prospective risk")
         plt.legend(['Maximum likelihood estimator',
