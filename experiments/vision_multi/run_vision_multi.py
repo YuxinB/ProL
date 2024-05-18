@@ -40,9 +40,9 @@ def main(cfg):
     # input parameters
     params = {
         # dataset
-        "dataset": "mnist",
+        "dataset": "cifar-10",
         "task": [[0, 1, 2], [1, 2, 3], [2, 3, 4]],    # task specification
-        "indices_file": 'mnist_00-51-47', #'cifar-10_02-12-13',
+        "indices_file": 'cifar-10_02-12-13', # 'cifar-10_02-12-13', 'mnist_00-51-47', 'mnist_03-59-20'
 
         # experiment
         "method": cfg.method,         # select from {proformer, cnn, mlp, timecnn}
@@ -51,21 +51,21 @@ def main(cfg):
         "T": 5000,                   # future time horizon
         "seed": 1996,   
         "device": cfg.device,          # device
-        "reps": 100,                 # number of test reps
+        "reps": 50,                 # number of test reps
         "outer_reps": 3,         
        
         # proformer
         "proformer" : {
             "contextlength": 50 if cfg.t < 500 else 200, 
             "encoding_type": 'freq',      
-            "multihop": False
+            "multihop": True
         },
 
         # conv_proformer
         "conv_proformer" : {
             "contextlength": 50 if cfg.t < 500 else 80, 
             "encoding_type": 'freq',      
-            "multihop": False
+            "multihop": True
         },
 
         # timecnn
@@ -80,7 +80,7 @@ def main(cfg):
               
         # training params
         "lr": 1e-3,         
-        "batchsize": 64,
+        "batchsize": 16,
         "epochs": 500,
         "verbose": True
     }
@@ -92,7 +92,7 @@ def main(cfg):
 
     # get source dataset
     root = '/home/ubuntu/ProL/data'
-    torch_dataset = get_torch_dataset(root, name=args.dataset)
+    torch_dataset, train_transform, test_transform = get_torch_dataset(root, name=args.dataset)
     
     # get indices for each task
     _, maplab, torch_dataset = get_multi_indices_and_map(
@@ -122,6 +122,7 @@ def main(cfg):
         if args.t > 0:
             data_kwargs = {
                 "dataset": torch_dataset, 
+                "transform": train_transform,
                 "seqInd": train_SeqInd, 
                 "maplab": maplab
             }
@@ -157,6 +158,7 @@ def main(cfg):
             # form a test dataset for each test sequence
             test_kwargs = {
                 "dataset": torch_dataset, 
+                "transform": test_transform,
                 "train_seqInd": train_SeqInd, 
                 "test_seqInd": test_seqInds[i], 
                 "maplab": maplab

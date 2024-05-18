@@ -86,10 +86,28 @@ def get_torch_dataset(root, name='mnist'):
             train=True,
             download=True
         )
-        # normalize
-        tmp = dataset.data.float() / 255.0
-        tmp = (tmp - 0.5)/0.5
-        dataset.data = tmp[..., None]
+
+        # prepare dataset
+        dataset.data = dataset.data.unsqueeze(1)
+
+        mean_norm = [0.50]
+        std_norm = [0.25]
+        
+        augment_transform = torchvision.transforms.Compose([
+            torchvision.transforms.RandomCrop(28, padding=4), 
+            torchvision.transforms.ConvertImageDtype(torch.float),
+            torchvision.transforms.Normalize(mean=mean_norm, std=std_norm)
+        ])
+
+        vanilla_transform = torchvision.transforms.Compose([
+            torchvision.transforms.ConvertImageDtype(torch.float),
+            torchvision.transforms.Normalize(mean=mean_norm, std=std_norm)
+        ])
+
+        # # normalize
+        # tmp = dataset.data.float() / 255.0
+        # tmp = (tmp - 0.5)/0.5
+        # dataset.data = tmp[..., None]
 
     elif name == 'cifar-10':
         dataset = torchvision.datasets.CIFAR10(
@@ -97,16 +115,37 @@ def get_torch_dataset(root, name='mnist'):
             train=True,
             download=True
         )
-        # normalize
-        tmp = torch.from_numpy(dataset.data).float() / 255.0
-        tmp = (tmp - 0.5)/0.5
-        dataset.data = tmp
-        tmp = dataset.targets
-        dataset.targets = torch.Tensor(tmp).long()
+
+        # prepare dataset
+        dataset.data = torch.from_numpy(dataset.data).permute(0, 3, 1, 2)
+        dataset.targets = torch.Tensor(dataset.targets).long()
+
+        mean_norm = [0.50, 0.50, 0.50]
+        std_norm = [0.25, 0.25, 0.25]
+        augment_transform = torchvision.transforms.Compose([
+            torchvision.transforms.RandomCrop(32, padding=4), 
+            torchvision.transforms.RandomHorizontalFlip(),
+            torchvision.transforms.ConvertImageDtype(torch.float),
+            torchvision.transforms.Normalize(mean=mean_norm, std=std_norm)
+        ])
+
+        vanilla_transform = torchvision.transforms.Compose([
+            torchvision.transforms.ConvertImageDtype(torch.float),
+            torchvision.transforms.Normalize(mean=mean_norm, std=std_norm)
+        ])
+
+        # # normalize
+        # tmp = torch.from_numpy(dataset.data).float() / 255.0
+        # mean_norm = [0.50, 0.50, 0.50]
+        # std_norm = [0.25, 0.25, 0.25]
+        # tmp = (tmp - mean_norm)/std_norm
+        # dataset.data = tmp
+        # tmp = dataset.targets
+        # dataset.targets = torch.Tensor(tmp).long()
         
-    assert dataset.data.max() == 1.0
-    assert dataset.data.min() == -1.0
-    return dataset
+    # assert dataset.data.max() == 1.0
+    # assert dataset.data.min() == -1.0
+    return dataset, augment_transform, vanilla_transform
 
 # vision (label swap and covariate shift)
 def get_task_indicies_and_map(tasks: list, y: np.ndarray, type='covariate-shift'):

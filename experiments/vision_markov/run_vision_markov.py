@@ -92,7 +92,7 @@ def main(cfg):
 
     # get source dataset
     root = '/home/ubuntu/ProL/data'
-    torch_dataset = get_torch_dataset(root, name=args.dataset)
+    torch_dataset, train_transform, test_transform = get_torch_dataset(root, name=args.dataset)
     
     # get indices for each task
     _, maplab, torch_dataset = get_multi_indices_and_map(
@@ -122,6 +122,7 @@ def main(cfg):
         if args.t > 0:
             data_kwargs = {
                 "dataset": torch_dataset, 
+                "transform": train_transform,
                 "seqInd": train_SeqInd, 
                 "maplab": maplab
             }
@@ -157,6 +158,7 @@ def main(cfg):
             # form a test dataset for each test sequence
             test_kwargs = {
                 "dataset": torch_dataset, 
+                "transform": test_transform,
                 "train_seqInd": train_SeqInd, 
                 "test_seqInd": test_seqInds[i], 
                 "maplab": maplab

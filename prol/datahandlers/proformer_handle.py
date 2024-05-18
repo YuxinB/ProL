@@ -100,7 +100,7 @@ class SyntheticSequentialTestDataset(Dataset):
         return data, time, labels, target
 
 class VisionSequentialDataset(Dataset):
-    def __init__(self, args, dataset, seqInd, maplab):
+    def __init__(self, args, dataset, transform, seqInd, maplab):
         """Create a dataset of context window (history + single future datum)
 
         Parameters
@@ -121,6 +121,7 @@ class VisionSequentialDataset(Dataset):
         self.time = torch.arange(self.t).float()
         self.seqInd = seqInd
         self.maplab = maplab
+        self.transform = transform
 
         self.max_num_classes = max([len(task) for task in args.task])
 
@@ -139,6 +140,7 @@ class VisionSequentialDataset(Dataset):
         dataid = self.seqInd[id] # get indices for the context window
 
         data = self.dataset.data[dataid]
+        data = self.transform(data)
         data = data.flatten(1, -1)
 
         time = self.time[id]
@@ -152,7 +154,7 @@ class VisionSequentialDataset(Dataset):
         return data, time, labels, target
     
 class VisionSequentialTestDataset(Dataset):
-    def __init__(self, args, dataset, train_seqInd, test_seqInd, maplab) -> None:
+    def __init__(self, args, dataset, transform, train_seqInd, test_seqInd, maplab) -> None:
         """Create the testing dataset
 
         Parameters
@@ -174,6 +176,7 @@ class VisionSequentialTestDataset(Dataset):
         self.train_seqInd = train_seqInd[-self.contextlength:]
         self.test_seqInd = test_seqInd[t:]
         self.maplab = maplab
+        self.transform = transform
         
         self.train_time = torch.arange(t).float()
         self.test_time = torch.arange(t, t + len(test_seqInd)).float()
@@ -187,6 +190,7 @@ class VisionSequentialTestDataset(Dataset):
         dataid = self.train_seqInd.tolist() + [self.test_seqInd[idx]] # most recent history + inference datum indices
 
         data = self.dataset.data[dataid]
+        data = self.transform(data)
         data = data.flatten(1, -1)
 
         time = torch.cat([

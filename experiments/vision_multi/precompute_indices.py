@@ -20,7 +20,7 @@ reps = 100
 
 # get the torch dataset
 root = '../../data'
-torch_dataset = get_torch_dataset(root, dataset)
+torch_dataset, _, _ = get_torch_dataset(root, dataset)
 
 # get the task index dict, label mapper, and updated torch dataset
 taskInd, maplab, torch_dataset = get_multi_indices_and_map(tasks, torch_dataset)

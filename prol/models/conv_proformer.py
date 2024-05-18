@@ -101,8 +101,6 @@ class Model(nn.Module):
         return enc
 
     def forward(self, data, labels, times):  
-        data = data.permute(0, 1, 4, 2, 3)
-
         shape_ = data.shape
         data = data.flatten(0, 1)
         x = self.featurizer(data).squeeze() 
@@ -221,7 +219,7 @@ if __name__ == "__main__":
     net = Model(num_classes=4, **kwargs)
     net.to(device)
 
-    data = torch.randn((1, 201, 32, 32, 3)).to(device)
+    data = torch.randn((1, 201, 3, 32, 32)).to(device)
     labels = torch.randn((1, 201, 4)).to(device)
     times = torch.arange(201).view(1, -1).to(device)
 

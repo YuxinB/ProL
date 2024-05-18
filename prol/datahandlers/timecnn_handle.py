@@ -2,7 +2,7 @@ import torch
 from torch.utils.data import Dataset
 
 class VisionSequentialDataset(Dataset):
-    def __init__(self, args, dataset, seqInd, maplab):
+    def __init__(self, args, dataset, transform, seqInd, maplab):
         """Create a dataset of context window (history + single future datum)
 
         Parameters
@@ -20,12 +20,14 @@ class VisionSequentialDataset(Dataset):
         self.t = len(seqInd)
         self.time = torch.arange(self.t).float()
         self.maplab = maplab
+        self.transform = transform
 
     def __len__(self):
         return len(self.seqInd)
 
     def __getitem__(self, idx):
-        data = self.dataset.data[self.seqInd[idx]].permute(2, 0, 1)
+        data = self.dataset.data[self.seqInd[idx]]
+        data = self.transform(data)
         label = self.dataset.targets[self.seqInd[idx]].apply_(self.maplab)
         time = self.time[idx]
         return data, time, label
@@ -46,7 +48,7 @@ class VisionSequentialTestDataset(Dataset):
         maplab : _type_
             label mapper
         """
-    def __init__(self, args, dataset, train_seqInd, test_seqInd, maplab) -> None:
+    def __init__(self, args, dataset, transform, train_seqInd, test_seqInd, maplab) -> None:
         t = len(train_seqInd)
         self.dataset = dataset
         self.test_seqInd = test_seqInd[t:]
@@ -58,7 +60,8 @@ class VisionSequentialTestDataset(Dataset):
         return len(self.test_seqInd)
         
     def __getitem__(self, idx):
-        data = self.dataset.data[self.test_seqInd[idx]].permute(2, 0, 1)
+        data = self.dataset.data[self.test_seqInd[idx]]
+        data = self.transform(data)
         label = self.dataset.targets[self.test_seqInd[idx]].apply_(self.maplab)
         time = self.test_time[idx]
         return data, time, label

@@ -42,9 +42,9 @@ def main(cfg):
     # input parameters
     params = {
         # dataset
-        "dataset": "cifar-10",
-        "task": [[0, 1, 2], [1, 2, 3], [2, 3, 4]],    # task specification
-        "indices_file": 'cifar-10_02-12-13', # 'mnist_00-51-47', 'cifar-10_02-12-13'
+        "dataset": "mnist",
+        "task": [[0, 1, 2, 3, 4], [3, 4, 5, 6], [5, 6, 7, 8], [7, 8, 9]],    # task specification
+        "indices_file": 'mnist_03-59-20', # 'mnist_00-51-47', 'cifar-10_02-12-13'
 
         # experiment
         "method": cfg.method,         # select from {proformer, cnn, mlp, timecnn}
@@ -53,13 +53,13 @@ def main(cfg):
         "T": 5000,                   # future time horizon
         "seed": 1996,   
         "device": cfg.device,          # device
-        "reps": 20,                 # number of test reps
+        "reps": 50,                 # number of test reps
         "outer_reps": 3,         
               
         # training params
         "lr": 1e-3,         
         "batchsize": 64,
-        "epochs": 1000,
+        "epochs": 700,
         "verbose": True
     }
     args = SetParams(params)
@@ -67,7 +67,7 @@ def main(cfg):
 
     # get source dataset
     root = '/home/ubuntu/ProL/data'
-    torch_dataset = get_torch_dataset(root, name=args.dataset)
+    torch_dataset, train_transform, test_transform = get_torch_dataset(root, name=args.dataset)
     
     # get indices for each task
     _, maplab, torch_dataset = get_multi_indices_and_map(
@@ -104,6 +104,7 @@ def main(cfg):
             for i, task in enumerate(args.task):
                 data_kwargs = {
                     "dataset": torch_dataset, 
+                    "transform": train_transform,
                     "seqInd": train_SeqInd[pattern == i], 
                     "maplab": maplab
                 }
@@ -143,6 +144,7 @@ def main(cfg):
             # form a test dataset for each test sequence
             test_kwargs = {
                 "dataset": torch_dataset, 
+                "transform": test_transform,
                 "train_seqInd": train_SeqInd, 
                 "test_seqInd": test_seqInds[i], 
                 "maplab": maplab
