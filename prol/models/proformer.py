@@ -34,14 +34,6 @@ class Model(nn.Module):
         self.d_model = d_model
         self.max_len = max_len
 
-        self.attention_blocks = nn.ModuleList(
-            [SelfAttention(d_model, num_heads, ff_hidden_dim) for _ in range(num_attn_blocks)]
-        )
-
-        self.input_embedding = nn.Linear(input_size+num_classes, d_model//2)
-        self.layernorm = nn.LayerNorm(normalized_shape=d_model, eps=1e-6)
-        self.classifier = nn.Linear(d_model, num_classes)
-
         if encoding_type == 'vanilla':
             pe = self.get_vanilla_encoding()
         elif encoding_type == 'freq':
@@ -49,6 +41,25 @@ class Model(nn.Module):
         else:
             raise NotImplementedError
         self.register_buffer('pe', pe)
+
+        self.input_embedding = nn.Linear(input_size+num_classes, d_model//2)
+
+        # self.attention_blocks = nn.ModuleList(
+        #     [SelfAttention(d_model, num_heads, ff_hidden_dim) for _ in range(num_attn_blocks)]
+        # )
+
+        encoder_layer = nn.TransformerEncoderLayer(
+            d_model=d_model,
+            nhead=num_heads,
+            dim_feedforward=ff_hidden_dim,
+            batch_first=True
+        )
+        self.transformer = nn.TransformerEncoder(
+            encoder_layer=encoder_layer,
+            num_layers=2
+        )
+
+        self.classifier = nn.Linear(d_model, num_classes)
 
     def get_vanilla_encoding(self):
         C = 10000
@@ -79,9 +90,14 @@ class Model(nn.Module):
 
         x = torch.cat((u, t), dim=-1)
 
-        for attn_block in self.attention_blocks:
-            x = attn_block(x)
-        x = torch.select(x, 1, -1)
+        # for attn_block in self.attention_blocks:
+        #     x = attn_block(x)
+
+        x = self.transformer(
+            src=x
+        )
+        
+        x = x[:, 0]
         x = self.classifier(x)
         return x
     
