@@ -16,7 +16,7 @@ class SelfAttention(nn.Module):
             nn.ReLU(),
             nn.Linear(hidden_dim, d_model, p),
         )
-        self.mha = nn.MultiheadAttention(d_model, num_heads, p)
+        self.mha = nn.MultiheadAttention(d_model, num_heads, p, batch_first=True)
         self.layernorm1 = nn.LayerNorm(normalized_shape=d_model, eps=1e-6)
         self.layernorm2 = nn.LayerNorm(normalized_shape=d_model, eps=1e-6)
 
