@@ -41,6 +41,9 @@ class BaseTrainer:
         # loss function
         self.criterion = nn.CrossEntropyLoss()
 
+        # flag
+        self.istrained = False
+
     def fit(self, log):
         args = self.args
         nb_batches = len(self.trainloader)
@@ -69,6 +72,7 @@ class BaseTrainer:
                     "train_acc" : np.round(train_acc/nb_batches, 4)
                 }
                 log.info(f'{info}')
+        self.istrained = True
 
     def evaluate(self, test_dataset, verbose=False):
         testloader = get_dataloader(
