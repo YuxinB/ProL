@@ -7,12 +7,12 @@ from datetime import datetime
 import pickle
 
 # specify the task and the experimental details
-dataset = 'cifar-10'
+dataset = 'mnist'
 tasks = [
-    [0, 1, 2], [1, 2, 3], [2, 3, 4]
+    [0, 1, 2, 3, 4], [3, 4, 5, 6], [5, 6, 7, 8], [7, 8, 9]
 ]
 N = 10
-t_list = [0,100,200,500,700,1000,1200,1500,1700,2000,2500,3000,4000]
+t_list = [0,200,500,700,1000,1200,1500,1700,2000,2500,3000,4000]
 T = 5000
 initial_seed = 1996
 outer_reps = 3
