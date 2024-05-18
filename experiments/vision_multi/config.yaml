@@ -1,6 +1,9 @@
 t: 500
-method: "conv_proformer"
-device: "cuda:3"
+method: "proformer"
+device: "cuda:2"
+epochs: 500
+batchsize: 64
+augment: False
 
 defaults:
   - override hydra/launcher: joblib

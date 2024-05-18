@@ -27,3 +27,33 @@ def get_dataloader(dataset, batchsize, train=True):
                 **loader_kwargs
             )
     return loader
+
+def log_exp_config(log, args, params):
+    log.info(f'Dataset details:')
+    log.info(f'dataset: {args.dataset}')
+    log.info(f'task: {args.task}')
+    log.info(f'indices file: {args.indices_file}')
+    log.info('\n')
+
+    log.info(f'Experiment details:')
+    log.info(f'method: {args.method}')
+    log.info(f'N: {args.N}')
+    log.info(f't: {args.t}')
+    log.info(f'T: {args.T}')
+    log.info(f'seed: {args.seed}')
+    log.info(f'outer reps: {args.outer_reps}')
+    log.info(f'inner reps: {args.reps}')
+    log.info(f'device: {args.device}')
+    log.info('\n')
+
+    log.info(f'Method details:')
+    log.info(f'{params[args.method]}')
+    log.info('\n')
+
+    log.info(f'Training details:')
+    log.info(f'lr: {args.lr}')
+    log.info(f'batchsize: {args.batchsize}')
+    log.info(f'epochs: {args.epochs}')
+    log.info(f'augment: {args.augment}')
+    log.info(f'verbose: {args.verbose}')
+    log.info('\n')
