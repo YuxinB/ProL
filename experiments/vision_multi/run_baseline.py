@@ -35,16 +35,16 @@ def get_modules(name):
 
 log = logging.getLogger(__name__)
 
-@hydra.main(config_path=".", config_name="config")
+@hydra.main(config_path=".", config_name="config_mnist")
 def main(cfg):
     cwd = pathlib.Path(get_original_cwd())
 
     # input parameters
     params = {
         # dataset
-        "dataset": "mnist",
-        "task": [[0, 1, 2, 3, 4], [3, 4, 5, 6], [5, 6, 7, 8], [7, 8, 9]],    # task specification
-        "indices_file": 'mnist_03-59-20', # 'mnist_00-51-47', 'cifar-10_02-12-13'
+        "dataset": cfg.dataset,
+        "task": cfg.task,    # task specification
+        "indices_file": cfg.indices_file, # 'mnist_00-51-47', 'cifar-10_02-12-13'
 
         # experiment
         "method": cfg.method,         # select from {proformer, cnn, mlp, timecnn}
@@ -53,13 +53,14 @@ def main(cfg):
         "T": 5000,                   # future time horizon
         "seed": 1996,   
         "device": cfg.device,          # device
-        "reps": 50,                 # number of test reps
+        "reps": 100,                 # number of test reps
         "outer_reps": 3,         
               
         # training params
         "lr": 1e-3,         
-        "batchsize": 64,
-        "epochs": 700,
+        "batchsize": cfg.batchsize,
+        "epochs": cfg.epochs,
+        "augment": cfg.augment,
         "verbose": True
     }
     args = SetParams(params)
@@ -67,7 +68,12 @@ def main(cfg):
 
     # get source dataset
     root = '/home/ubuntu/ProL/data'
-    torch_dataset, train_transform, test_transform = get_torch_dataset(root, name=args.dataset)
+    torch_dataset, augment_transform, vanilla_transform = get_torch_dataset(root, name=args.dataset)
+    test_transform = vanilla_transform
+    if args.augment: 
+        train_transform = augment_transform
+    else:
+        train_transform = vanilla_transform
     
     # get indices for each task
     _, maplab, torch_dataset = get_multi_indices_and_map(
