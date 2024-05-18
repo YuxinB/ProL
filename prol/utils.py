@@ -18,8 +18,7 @@ def get_dataloader(dataset, batchsize, train=True):
     loader_kwargs = {
             'worker_init_fn': wif,
             'pin_memory': True,
-            'num_workers': 4,
-            'multiprocessing_context':'fork'
+            'num_workers': 4
     }
     loader = DataLoader(
                 dataset, 
