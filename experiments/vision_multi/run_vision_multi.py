@@ -86,6 +86,7 @@ def main(cfg):
         "verbose": True
     }
     args = SetParams(params)
+    log.info(f'{params}')
     log_exp_config(log, args, params)
 
     # max number of classes

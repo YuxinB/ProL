@@ -1,26 +1,40 @@
-#### MNIST ####
-"lr": 1e-3,         
-"batchsize": 64,
-"epochs": 500,
-"contextlength": 200,
+# #### MNIST ####
 
-# for others
-python run_vision_markov.py -m t=0,100,200,500,700,1000,1200,1500,1700,2000,2500,3000,4000 method="cnn" device='cuda:1' hydra.launcher.n_jobs=10
-python run_vision_markov.py -m t=0,100,200,500,700,1000,1200,1500,1700,2000,2500,3000,4000 method="timecnn" device='cuda:2' hydra.launcher.n_jobs=10
+# lower bound baseline (oracle learner)
+python run_baseline_1.py -m device='cuda:0' method="cnn" epochs=200 batchsize=64 t=0,200,500,700,1000,1200,1500,1700,2000,2500,3000,4000 hydra.launcher.n_jobs=10
 
-# for proformer
-python run_vision_markov.py -m t=0,100,200,500,700,1000,1200,1500,1700,2000,2500,3000,4000 method="proformer" device='cuda:3' hydra.launcher.n_jobs=8
+# upper bound baseline (OGD)
+python run_baseline_2.py -m device='cuda:1' method="cnn" epochs=100 batchsize=64 hydra.launcher.n_jobs=1
+
+# cnn
+python run_vision_multi.py -m device='cuda:0' method="cnn" epochs=500 batchsize=64 t=0,200,500,700,1000,1200,1500,1700,2000,2500,3000,4000 hydra.launcher.n_jobs=8
+
+# timecnn
+python run_vision_multi.py -m device='cuda:1' method="timecnn" epochs=500 batchsize=64 t=0,200,500,700,1000,1200,1500,1700,2000,2500,3000,4000 hydra.launcher.n_jobs=8
+
+# prosp. transformer
+python run_vision_multi.py -m device='cuda:2' method="proformer" multihop=True epochs=300 batchsize=32 t=0,200,500,700,1000,1200,1500,1700,2000,2500,3000,4000 hydra.launcher.n_jobs=6
+
+# transformer
+python run_vision_multi.py -m device='cuda:3' method="proformer" multihop=False epochs=300 batchsize=32 t=0,200,500,700,1000,1200,1500,1700,2000,2500,3000,4000 hydra.launcher.n_jobs=6
 
 
-#### CIFAR-10 ####
-"lr": 1e-3,         
-"batchsize": 32,
-"epochs": 500,
-"contextlength": 80,
+# #### CIFAR-10 ####
 
-# for others
-python run_vision_markov.py -m t=0,100,200,500,700,1000,1200,1500,1700,2000,2500,3000,4000 method="resnet" device='cuda:0' hydra.launcher.n_jobs=10
-python run_vision_markov.py -m t=0,100,200,500,700,1000,1200,1500,1700,2000,2500,3000,4000 method="timeresnet" device='cuda:1' hydra.launcher.n_jobs=10
+# lower bound baseline (oracle learner)
+python run_baseline_1.py -m device='cuda:0' method="resnet" epochs=1000 batchsize=64 t=0,200,500,700,1000,1200,1500,1700,2000,2500,3000,4000 hydra.launcher.n_jobs=8
 
-# for conv_proformer
-python run_vision_markov.py -m t=0,100,200,500,700,1000,1200,1500,1700,2000,2500,3000,4000 method="conv_proformer" device='cuda:0' hydra.launcher.n_jobs=4
+# upper bound baseline (OGD)
+python run_baseline_2.py -m device='cuda:1' method="resnet" epochs=500 batchsize=64 hydra.launcher.n_jobs=1
+
+# resnet
+python run_vision_multi.py -m device='cuda:0' method="resnet" epochs=1000 batchsize=64 t=0,200,500,700,1000,1200,1500,1700,2000,2500,3000,4000 hydra.launcher.n_jobs=8
+
+# time-resnet
+python run_vision_multi.py -m device='cuda:1' method="timeresnet" epochs=1000 batchsize=64 t=0,200,500,700,1000,1200,1500,1700,2000,2500,3000,4000 hydra.launcher.n_jobs=8
+
+# prosp. transformer
+python run_vision_multi.py -m device='cuda:2' method="conv_proformer" multihop=True epochs=300 batchsize=16 t=0,200,500,700,1000,1200,1500,1700,2000,2500,3000,4000 hydra.launcher.n_jobs=3
+
+# transformer
+python run_vision_multi.py -m device='cuda:3' method="conv_proformer" multihop=False epochs=300 batchsize=16 t=0,200,500,700,1000,1200,1500,1700,2000,2500,3000,4000 hydra.launcher.n_jobs=3

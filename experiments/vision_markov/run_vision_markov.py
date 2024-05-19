@@ -33,7 +33,7 @@ def get_modules(name):
 
 log = logging.getLogger(__name__)
 
-@hydra.main(config_path=".", config_name="config")
+@hydra.main(config_path=".", config_name="config_mnist")
 def main(cfg):
     cwd = pathlib.Path(get_original_cwd())
 
@@ -92,6 +92,7 @@ def main(cfg):
     }
     args = SetParams(params)
     log.info(f'{params}')
+    log_exp_config(log, args, params)
 
     # max number of classes
     max_num_classes = max([len(task) for task in args.task])
@@ -104,7 +105,6 @@ def main(cfg):
         train_transform = augment_transform
     else:
         train_transform = vanilla_transform
-
 
     # get indices for each task
     _, mapdict, torch_dataset = get_multi_indices_and_map(
