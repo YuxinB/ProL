@@ -53,6 +53,7 @@ class VisionSequentialTestDataset(Dataset):
         self.dataset = dataset
         self.test_seqInd = test_seqInd[t:]
         self.maplab = maplab
+        self.transform = transform
 
         self.test_time = torch.arange(t, t + len(test_seqInd)).float()
         

@@ -8,7 +8,7 @@ t: 0
 method: "cnn"
 multihop: True
 device: "cuda:0"
-epochs: 500
+epochs: 50
 batchsize: 64
 augment: False
 
@@ -18,4 +18,4 @@ defaults:
 hydra:
   launcher:
     # override the number of jobs for joblib
-    n_jobs: 10
+    n_jobs: 1
