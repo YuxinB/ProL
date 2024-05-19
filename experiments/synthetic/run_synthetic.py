@@ -30,28 +30,31 @@ log = logging.getLogger(__name__)
 
 @hydra.main(config_path=".", config_name="config")
 def main(cfg):
+
     # input parameters
     params = {
         # experiment params
         "dataset": "synthetic",
-        "method": "proformer",
+        "method": cfg.method,
         "N": 20,                     # time between two task switches                   
         "t": cfg.t,                  # training time
         "T": 5000,                   # future time horizon
         "seed": 1996,
-        "device": "cuda:1",
+        "device": cfg.device,
         "reps": 100,                 # number of test reps
         "outer_reps": 3,
 
-        # transformer params
-        "contextlength": 200, 
-        "encoding_type": 'vanilla',
-        "multihop": False,
+        # proformer
+        "proformer" : {
+            "contextlength": 60 if cfg.t < 500 else 200, 
+            "encoding_type": 'freq',      
+            "multihop": cfg.multihop
+        },
 
         # training params             
         "lr": 1e-3,         
-        "batchsize": 128,
-        "epochs": 500,
+        "batchsize": cfg.batchsize,
+        "epochs": cfg.epochs,
         "verbose": True
     }
     args = SetParams(params)
@@ -63,11 +66,19 @@ def main(cfg):
         
         # get a training sequence
         seed = args.seed * outer_rep * 2357
-        x_train, y_train = get_synthetic_data(
-            N=args.N,
-            total_time_steps=args.t,
-            seed=seed
-        )
+        if args.t > 0:
+            x_train, y_train = get_synthetic_data(
+                N=args.N,
+                total_time_steps=args.t,
+                seed=seed
+            )
+        else:
+            x_train, y_train = get_synthetic_data(
+                N=args.N,
+                total_time_steps=300,
+                seed=seed
+            ) # dummy training data for t = 0 case
+
 
         # sample a bunch of test sequences
         test_data = [
@@ -79,12 +90,15 @@ def main(cfg):
         method, datahandler = get_modules(args.method)
 
         # form the train dataset
-        train_dataset = datahandler.SyntheticSequentialDataset(args, x_train, y_train)
+        if args.t > 0:
+            train_dataset = datahandler.SyntheticSequentialDataset(args, x_train, y_train)
+        else:
+            train_dataset = [] 
 
         # model
         model_kwargs = method.model_defaults(args.dataset)
         if args.method == 'proformer':
-            model_kwargs['encoding_type'] = args.encoding_type
+            model_kwargs['encoding_type'] = params[args.method]['encoding_type']
         log.info(f'{model_kwargs}')
         model = method.Model(
             num_classes=2,
@@ -93,7 +107,8 @@ def main(cfg):
         
         # train
         trainer = method.Trainer(model, train_dataset, args)
-        trainer.fit(log)
+        if args.t > 0:
+            trainer.fit(log)
 
         # evaluate
         preds = []
