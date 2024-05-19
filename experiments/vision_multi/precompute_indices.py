@@ -1,10 +1,13 @@
 from prol.process import (
     get_torch_dataset,
     get_multi_indices_and_map,
-    get_multi_sequence_indices
+    get_multi_sequence_indices,
+    get_multi_cycle
 )
 from datetime import datetime
 import pickle
+import math
+import numpy as np
 
 # specify the task and the experimental details
 dataset = 'cifar-10'
@@ -24,6 +27,10 @@ torch_dataset, _, _ = get_torch_dataset(root, dataset)
 
 # get the task index dict, label mapper, and updated torch dataset
 taskInd, maplab, torch_dataset = get_multi_indices_and_map(tasks, torch_dataset)
+
+# get full pattern
+unit = get_multi_cycle(N, len(tasks))
+full_pattern = np.array((unit * math.ceil(T/(len(unit))))[:T]).astype("int")
 
 # obtain the train/test sequences for the experiment
 total_indices = {}
@@ -54,6 +61,8 @@ for t in t_list:
         seq['test'] = test_seqInds
         replicates.append(seq)
     total_indices[t] = replicates
+
+total_indices['full_pattern'] = full_pattern
 
 # save the indices
 filename = f'{dataset}_{datetime.now().strftime("%H-%M-%S")}'

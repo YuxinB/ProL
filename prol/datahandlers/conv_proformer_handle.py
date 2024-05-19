@@ -93,7 +93,7 @@ class VisionSequentialTestDataset(Dataset):
         dataid = self.train_seqInd.tolist() + [self.test_seqInd[idx]] # most recent history + inference datum indices
 
         data = self.dataset.data[dataid]
-        data = self.trasform(data)
+        data = self.transform(data)
 
         time = torch.cat([
             self.train_time[-self.contextlength:], 

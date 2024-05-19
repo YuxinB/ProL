@@ -35,7 +35,7 @@ def get_modules(name):
 
 log = logging.getLogger(__name__)
 
-@hydra.main(config_path=".", config_name="config_mnist")
+@hydra.main(config_path=".", config_name="config_cifar10")
 def main(cfg):
     cwd = pathlib.Path(get_original_cwd())
 
@@ -58,10 +58,10 @@ def main(cfg):
               
         # training params
         "lr": 1e-3,    
-        "ft_lt": 5e-4,     
+        "ft_lr": 5e-4,     
         "batchsize": cfg.batchsize,
         "epochs": cfg.epochs,
-        "ft_epochs": 50,
+        "ft_epochs": 100, # 50 for MNIST, 100 for CIFAR
         "augment": cfg.augment,
         "verbose": True
     }
@@ -86,14 +86,16 @@ def main(cfg):
         dataset=torch_dataset
     )
 
-    # get full task pattern
-    unit = get_multi_cycle(args.N, len(args.task))
-    full_pattern = np.array((unit * math.ceil(args.T/(len(unit))))[:args.T]).astype("int")
+    # unit = get_multi_cycle(args.N, len(args.task))
+    # full_pattern = np.array((unit * math.ceil(args.T/(len(unit))))[:args.T]).astype("int")
 
     # load the saved indicies
     indices_file = cwd / f'indices/{args.indices_file}.pkl'
     with open(indices_file, 'rb') as f:
         total_indices = pickle.load(f)
+
+    # get full task pattern
+    full_pattern = total_indices['full_pattern']
 
     # get the module for the specified method
     method, datahandler = get_modules(args.method)
@@ -192,6 +194,7 @@ def main(cfg):
     log.info(f"risks : {risks}")
     
     outputs = {
+        "t_list": t_list,
         "args": params,
         "risk": risks,
         "ci_risk": ci_risks

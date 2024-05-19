@@ -35,7 +35,7 @@ def get_modules(name):
 
 log = logging.getLogger(__name__)
 
-@hydra.main(config_path=".", config_name="config_mnist")
+@hydra.main(config_path=".", config_name="config_cifar10")
 def main(cfg):
     cwd = pathlib.Path(get_original_cwd())
 
@@ -81,14 +81,16 @@ def main(cfg):
         dataset=torch_dataset
     )
 
-    # get full task pattern
-    unit = get_multi_cycle(args.N, len(args.task))
-    full_pattern = np.array((unit * math.ceil(args.T/(len(unit))))[:args.T]).astype("int")
+    # unit = get_multi_cycle(args.N, len(args.task))
+    # full_pattern = np.array((unit * math.ceil(args.T/(len(unit))))[:args.T]).astype("int")
 
     # load the saved indicies
     indices_file = cwd / f'indices/{args.indices_file}.pkl'
     with open(indices_file, 'rb') as f:
         total_indices = pickle.load(f)
+
+    # get full task pattern
+    full_pattern = total_indices['full_pattern']
 
     risk_list = []
     for outer_rep in range(args.outer_reps):

@@ -19,15 +19,24 @@ python run_vision_multi.py -m device='cuda:2' method="proformer" multihop=True e
 python run_vision_multi.py -m device='cuda:3' method="proformer" multihop=False epochs=300 batchsize=32 t=0,200,500,700,1000,1200,1500,1700,2000,2500,3000,4000 hydra.launcher.n_jobs=6
 
 
-# for proformer
-# CUDA_VISIBLE_DEVICES=1 python run_vision_multi.py -m t=0,100,200,500,700,1000,1200,1500,1700,2000,2500,3000,4000 method="proformer" device='cuda:0' hydra.launcher.n_jobs=10
-
-
 # #### CIFAR-10 ####
-# "lr": 1e-3,         
-# "batchsize": 32,
-# "epochs": 500,
-# "contextlength": 80,
+python run_baseline_1.py -m device='cuda:0' method="resnet" epochs=1000 batchsize=64 t=0,200,500,700,1000,1200,1500,1700,2000,2500,3000,4000 hydra.launcher.n_jobs=8
+
+# upper bound baseline (OGD)
+python run_baseline_2.py -m device='cuda:1' method="resnet" epochs=500 batchsize=64 hydra.launcher.n_jobs=1
+
+# resnet
+python run_vision_multi.py -m device='cuda:0' method="resnet" epochs=1000 batchsize=64 t=0,200,500,700,1000,1200,1500,1700,2000,2500,3000,4000 hydra.launcher.n_jobs=8
+
+# time-resnet
+python run_vision_multi.py -m device='cuda:1' method="timeresnet" epochs=1000 batchsize=64 t=0,200,500,700,1000,1200,1500,1700,2000,2500,3000,4000 hydra.launcher.n_jobs=8
+
+# prosp. transformer
+python run_vision_multi.py -m device='cuda:2' method="conv_proformer" multihop=True epochs=300 batchsize=16 t=0,200,500,700,1000,1200,1500,1700,2000,2500,3000,4000 hydra.launcher.n_jobs=3
+
+# transformer
+python run_vision_multi.py -m device='cuda:3' method="conv_proformer" multihop=False epochs=300 batchsize=16 t=0,200,500,700,1000,1200,1500,1700,2000,2500,3000,4000 hydra.launcher.n_jobs=3
+
 
 # # lower bound baseline
 # python run_baseline.py -m t=0,100,200,500,700,1000,1200,1500,1700,2000,2500,3000,4000 method="resnet" device='cuda:1' hydra.launcher.n_jobs=10

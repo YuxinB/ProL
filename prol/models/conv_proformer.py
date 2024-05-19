@@ -120,7 +120,7 @@ class Model(nn.Module):
             src=x
         )
 
-        x = x[:, 0]
+        x = x[:, -1]
         x = self.classifier(x)
         return x
     
@@ -140,7 +140,7 @@ def model_defaults(dataset):
             "d_model": 256, 
             "num_heads": 8,
             "ff_hidden_dim": 1024,
-            "num_attn_blocks": 2,
+            "num_attn_blocks": 4,
             "encoding_type": 'freq'
         }
     else:
