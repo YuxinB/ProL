@@ -1,5 +1,5 @@
 '''
-Vision covariate shift exps
+Run Markov (case 3) exps
 '''
 import importlib
 import torch
@@ -8,14 +8,14 @@ from tqdm.auto import tqdm
 import pickle
 
 import hydra
-from hydra.utils import get_original_cwd, to_absolute_path
+from hydra.utils import get_original_cwd
 import logging
 
 from prol.process import (
     get_torch_dataset,
     get_multi_indices_and_map
 )
-
+from prol.utils import log_exp_config
 import pathlib
 
 class SetParams:
@@ -37,35 +37,40 @@ log = logging.getLogger(__name__)
 def main(cfg):
     cwd = pathlib.Path(get_original_cwd())
 
+    # load the saved indicies
+    indices_file = cwd / f'indices/{cfg.indices_file}.pkl'
+    with open(indices_file, 'rb') as f:
+        total_indices = pickle.load(f)
+
     # input parameters
     params = {
         # dataset
-        "dataset": "mnist",
-        "task": [[0, 1, 2], [1, 2, 3], [2, 3, 4]],    # task specification
-        "indices_file": 'mnist_17-14-30',
+        "dataset": total_indices["dataset"],
+        "task": total_indices["task"],    # task specification
+        "indices_file": cfg.indices_file,
 
         # experiment
         "method": cfg.method,         # select from {proformer, cnn, mlp, timecnn}
-        "N": 10,                     # time between two task switches                   
+        "N": total_indices["N"],                     # time between two task switches                   
         "t": cfg.t,                  # training time
-        "T": 5000,                   # future time horizon
+        "T": total_indices["T"],                   # future time horizon
         "seed": 1996,   
         "device": cfg.device,          # device
-        "reps": 100,                 # number of test reps
-        "outer_reps": 3,         
+        "reps": total_indices["inner_reps"],                 # number of test reps
+        "outer_reps": total_indices["outer_reps"],         
        
         # proformer
         "proformer" : {
-            "contextlength": 50 if cfg.t < 500 else 200, 
+            "contextlength": 60 if cfg.t < 500 else 200, 
             "encoding_type": 'freq',      
-            "multihop": True
+            "multihop": cfg.multihop
         },
 
         # conv_proformer
         "conv_proformer" : {
-            "contextlength": 50 if cfg.t < 500 else 80, 
+            "contextlength": 60 if cfg.t < 500 else 200, 
             "encoding_type": 'freq',      
-            "multihop": True
+            "multihop": cfg.multihop
         },
 
         # timecnn
@@ -80,8 +85,9 @@ def main(cfg):
               
         # training params
         "lr": 1e-3,         
-        "batchsize": 64,
-        "epochs": 500,
+        "batchsize": cfg.batchsize,
+        "epochs": cfg.epochs,
+        "augment": cfg.augment,
         "verbose": True
     }
     args = SetParams(params)
@@ -92,18 +98,20 @@ def main(cfg):
 
     # get source dataset
     root = '/home/ubuntu/ProL/data'
-    torch_dataset, train_transform, test_transform = get_torch_dataset(root, name=args.dataset)
-    
+    torch_dataset, augment_transform, vanilla_transform = get_torch_dataset(root, name=args.dataset)
+    test_transform = vanilla_transform
+    if args.augment: 
+        train_transform = augment_transform
+    else:
+        train_transform = vanilla_transform
+
+
     # get indices for each task
-    _, maplab, torch_dataset = get_multi_indices_and_map(
+    _, mapdict, torch_dataset = get_multi_indices_and_map(
         tasks=args.task,
         dataset=torch_dataset
     )
-
-    # load the saved indicies
-    indices_file = cwd / f'indices/{args.indices_file}.pkl'
-    with open(indices_file, 'rb') as f:
-        total_indices = pickle.load(f)
+    maplab = lambda lab : mapdict[lab]
 
     risk_list = []
     for outer_rep in range(args.outer_reps):

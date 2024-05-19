@@ -1,3 +1,7 @@
+'''
+Precompute indices for independent (case 2) exps
+'''
+
 from prol.process import (
     get_torch_dataset,
     get_multi_indices_and_map,
@@ -26,7 +30,8 @@ root = '../../data'
 torch_dataset, _, _ = get_torch_dataset(root, dataset)
 
 # get the task index dict, label mapper, and updated torch dataset
-taskInd, maplab, torch_dataset = get_multi_indices_and_map(tasks, torch_dataset)
+taskInd, mapdict, torch_dataset = get_multi_indices_and_map(tasks, torch_dataset)
+maplab = lambda lab : mapdict[lab]
 
 # get full pattern
 unit = get_multi_cycle(N, len(tasks))
@@ -63,6 +68,14 @@ for t in t_list:
     total_indices[t] = replicates
 
 total_indices['full_pattern'] = full_pattern
+total_indices['task'] = tasks
+total_indices['time_list'] = t_list
+total_indices['N'] = N
+total_indices['T'] = T
+total_indices['outer_reps'] = outer_reps
+total_indices['inner_reps'] = reps
+total_indices['dataset'] = dataset
+total_indices['mapdict'] = mapdict
 
 # save the indices
 filename = f'{dataset}_{datetime.now().strftime("%H-%M-%S")}'

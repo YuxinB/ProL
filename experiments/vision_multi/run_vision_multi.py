@@ -1,5 +1,5 @@
 '''
-Vision covariate shift exps
+Run Independent (case 2) exps
 '''
 import importlib
 import torch
@@ -8,7 +8,7 @@ from tqdm.auto import tqdm
 import pickle
 
 import hydra
-from hydra.utils import get_original_cwd, to_absolute_path
+from hydra.utils import get_original_cwd
 import logging
 
 from prol.process import (
@@ -101,10 +101,11 @@ def main(cfg):
         train_transform = vanilla_transform
 
     # get indices for each task
-    _, maplab, torch_dataset = get_multi_indices_and_map(
+    _, mapdict, torch_dataset = get_multi_indices_and_map(
         tasks=args.task,
         dataset=torch_dataset
     )
+    maplab = lambda lab : mapdict[lab]
 
     # load the saved indicies
     indices_file = cwd / f'indices/{args.indices_file}.pkl'

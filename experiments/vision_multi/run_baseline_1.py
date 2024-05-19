@@ -76,10 +76,11 @@ def main(cfg):
         train_transform = vanilla_transform
     
     # get indices for each task
-    _, maplab, torch_dataset = get_multi_indices_and_map(
+    _, mapdict, torch_dataset = get_multi_indices_and_map(
         tasks=args.task,
         dataset=torch_dataset
     )
+    maplab = lambda lab : mapdict[lab]
 
     # unit = get_multi_cycle(args.N, len(args.task))
     # full_pattern = np.array((unit * math.ceil(args.T/(len(unit))))[:args.T]).astype("int")

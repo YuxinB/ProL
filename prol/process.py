@@ -295,7 +295,7 @@ def get_multi_indices_and_map(tasks, dataset):
             dummy_labels[i][j] = k
             k += 1
     mapdict = dict(zip(flatten(dummy_labels), flatten(task_labels)))
-    maplab = lambda lab : mapdict[lab]
+    # maplab = lambda lab : mapdict[lab]
 
     # assign dummy labels to the original labels
     for i, _ in enumerate(tasks):
@@ -306,7 +306,7 @@ def get_multi_indices_and_map(tasks, dataset):
 
     dataset.targets = torch.from_numpy(y).long()
 
-    return tasklib, maplab, dataset
+    return tasklib, mapdict, dataset
 
 def get_multi_sequence_indices(N, total_time_steps, tasklib, seed=1996, remove_train_samples=False):
     """Get indices for a sequence drawn from the stochastic process
@@ -345,7 +345,7 @@ def get_multi_sequence_indices(N, total_time_steps, tasklib, seed=1996, remove_t
 def get_markov_chain(num_tasks, T, N, seed):
     """
     Get the task sequence sampled according to a Markov chain.
-    (The transition matrix is currently hard-coded for 3 states/tasks)
+    (The transition matrix is currently hard-coded for 3/4 states/tasks)
 
     Parameters
     ----------
@@ -354,11 +354,21 @@ def get_markov_chain(num_tasks, T, N, seed):
     N : repeating number
     seed : random seed
     """
-    P = np.array([
-        [0.2, 0.7, 0.1],
-        [0.5, 0.3, 0.2],
-        [0.3, 0.3, 0.4]
-        ])
+    if num_tasks == 3:
+        P = np.array([
+            [0.2, 0.7, 0.1],
+            [0.5, 0.3, 0.2],
+            [0.3, 0.3, 0.4]
+            ])
+    elif num_tasks == 4:
+        P = np.array([
+            [0.1, 0.7, 0.1, 0.1],
+            [0.5, 0.15, 0.05, 0.3],
+            [0.2, 0.3, 0.4, 0.1],
+            [0.6, 0.1, 0.15, 0.15]
+            ])
+    else:
+        raise NotImplementedError
     initial_state_distro = np.array([1./num_tasks] * num_tasks)
     state_distros = np.array(
         [initial_state_distro.dot(np.linalg.matrix_power(P, l)) for l in range(T//N)]
