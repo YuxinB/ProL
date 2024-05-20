@@ -1,7 +1,3 @@
-python run_synthetic.py -m t=100,200,500,700,1000,1200,1500,1700,2000,2500
-# python run.py -m t=500,700,1000,1200,1500,1700,2000,2500
-
-
 # Baseline 1 (Oracle)
 python run_baseline_1.py -m device='cuda:0' method="mlp" epochs=300 batchsize=64 t=0,100,200,500,700,1000,1200,1500,1700,2000,2500 hydra.launcher.n_jobs=8
 
