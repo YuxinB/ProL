@@ -14,7 +14,7 @@ dataset = 'synthetic'
 N = 20
 T = 5000
 initial_seed = 1996
-outer_reps = 3
+outer_reps = 10
 
 num_tasks = 2
 patterns = np.array([get_markov_chain(num_tasks, T, N, seed=k*11111) for k in range(outer_reps)])
@@ -26,7 +26,7 @@ output = {
     "outer_reps": outer_reps
 }
 
-fname = f'{dataset}.pkl'
+fname = f'{dataset}_{outer_reps}.pkl'
 with open(fname, 'wb') as f:
     pickle.dump(output, f)
 

@@ -40,14 +40,15 @@ def main(cfg):
     params = {
         # experiment params
         "dataset": "synthetic",
+        "seq_file": "synthetic_10",
         "method": cfg.method,
         "N": 20,                     # time between two task switches                   
         "t": cfg.t,                  # training time
         "T": 5000,                   # future time horizon
         "seed": 1996,
         "device": cfg.device,
-        "reps": 100,                 # number of test reps
-        "outer_reps": 3,
+        "reps": 20,                 # number of test reps
+        "outer_reps": 10,
 
         # proformer
         "proformer" : {
@@ -67,12 +68,17 @@ def main(cfg):
 
     # get the task patterns fromt the Markov chain
     cwd = pathlib.Path(get_original_cwd()) 
-    fname = cwd / 'synthetic.pkl'
+    fname = cwd / f'{args.seq_file}.pkl'
     with open(fname, 'rb') as f:
         saved = pickle.load(f)
     full_pattern_list = saved['pattern']
 
     risk_list = []
+    raw_metrics = {
+        "t": args.t,
+        "preds": [],
+        "truths": []
+    }
     for outer_rep in range(args.outer_reps):
         log.info(" ")
 
@@ -146,6 +152,10 @@ def main(cfg):
         preds = np.array(preds)
         truths = np.array(truths)
 
+        # store raw predictions and truths
+        raw_metrics['preds'].append(preds)
+        raw_metrics['truths'].append(truths)
+
         # compute metrics
         instantaneous_risk = np.mean(preds != truths, axis=0).squeeze()
         std_error = np.std(preds != truths, axis=0).squeeze()
@@ -164,7 +174,8 @@ def main(cfg):
         "risk": risk,
         "ci_risk": ci_risk, 
         "inst_risk": instantaneous_risk,
-        "ci": ci
+        "ci": ci, 
+        "raw_metrics": raw_metrics
     }
     with open('outputs.pkl', 'wb') as f:
         pickle.dump(outputs, f)
