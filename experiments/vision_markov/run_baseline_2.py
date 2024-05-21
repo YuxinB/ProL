@@ -104,6 +104,7 @@ def main(cfg):
     t_list = [0,200,500,700,1000,1200,1500,1700,2000,2500,3000,4000]
     risk_list = [[] for _ in range(args.outer_reps)]
 
+    raw_metrics = {}
     for outer_rep in range(args.outer_reps):
         log.info(f"rep : {outer_rep}")
 
@@ -118,6 +119,7 @@ def main(cfg):
 
         for t in t_list:
             log.info(f"time : {t}")
+
             args.t = t
             # get a training sequence
             if prev_t == 0 and t == 0:
