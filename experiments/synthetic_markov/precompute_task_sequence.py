@@ -14,7 +14,7 @@ dataset = 'synthetic'
 N = 20
 T = 5000
 initial_seed = 1996
-outer_reps = 10
+outer_reps = 50
 
 num_tasks = 2
 patterns = np.array([get_markov_chain(num_tasks, T, N, seed=k*11111) for k in range(outer_reps)])

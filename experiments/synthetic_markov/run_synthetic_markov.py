@@ -36,19 +36,26 @@ log = logging.getLogger(__name__)
 @hydra.main(config_path=".", config_name="config")
 def main(cfg):
 
+    cwd = pathlib.Path(get_original_cwd())
+
+    # load the saved indicies
+    patterns_file = cwd / f'{cfg.patterns_file}.pkl'
+    with open(patterns_file, 'rb') as f:
+        patterns_dict = pickle.load(f)
+
     # input parameters
     params = {
         # experiment params
         "dataset": "synthetic",
-        "seq_file": "synthetic_10",
+        "seq_file": cfg.patterns_file,
         "method": cfg.method,
-        "N": 20,                     # time between two task switches                   
+        "N": patterns_dict["N"],                     # time between two task switches                   
         "t": cfg.t,                  # training time
-        "T": 5000,                   # future time horizon
+        "T": patterns_dict["T"],                   # future time horizon
         "seed": 1996,
         "device": cfg.device,
         "reps": 20,                 # number of test reps
-        "outer_reps": 10,
+        "outer_reps": patterns_dict["outer_reps"],
 
         # proformer
         "proformer" : {
