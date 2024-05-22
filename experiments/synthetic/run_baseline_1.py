@@ -1,8 +1,8 @@
 '''
-Synthetic label swap exps
+Indepedent (case 2) Exp
 '''
-
 import importlib
+import torch
 import numpy as np
 from tqdm.auto import tqdm
 import pickle
@@ -10,7 +10,11 @@ import pickle
 import hydra
 import logging
 
-from prol.process import get_synthetic_data
+from prol.process import (
+    get_synthetic_data,
+    get_cycle
+)
+import math
 
 class SetParams:
     def __init__(self, dict) -> None:
@@ -43,13 +47,6 @@ def main(cfg):
         "reps": 100,                 # number of test reps
         "outer_reps": 3,
 
-        # proformer
-        "proformer" : {
-            "contextlength": 60 if cfg.t < 500 else 200, 
-            "encoding_type": 'freq',      
-            "multihop": cfg.multihop
-        },
-
         # training params             
         "lr": 1e-3,         
         "batchsize": cfg.batchsize,
@@ -58,6 +55,9 @@ def main(cfg):
     }
     args = SetParams(params)
     log.info(f'{params}')
+
+    unit = get_cycle(args.N)
+    full_pattern = np.array((unit * math.ceil(args.T/(len(unit))))[:args.T]).astype("int")
 
     risk_list = []
     for outer_rep in range(args.outer_reps):
@@ -72,11 +72,7 @@ def main(cfg):
                 seed=seed
             )
         else:
-            x_train, y_train = get_synthetic_data(
-                N=args.N,
-                total_time_steps=300,
-                seed=seed
-            ) # dummy training data for t = 0 case
+            x_train, y_train = [], []
 
         # sample a bunch of test sequences
         test_data = [
@@ -89,24 +85,41 @@ def main(cfg):
 
         # form the train dataset
         if args.t > 0:
-            train_dataset = datahandler.SyntheticSequentialDataset(args, x_train, y_train)
+            train_dataset_list = []
+            pattern = full_pattern[:args.t]
+            for i in range(2):
+                train_dataset = datahandler.SyntheticSequentialDataset(
+                    args, 
+                    x_train[pattern==i], 
+                    y_train[pattern==i]
+                )
+                train_dataset_list.append(train_dataset)
         else:
-            train_dataset = [] 
+            train_dataset_list = [[] for _ in range(2)] 
 
         # model
-        model_kwargs = method.model_defaults(args.dataset)
-        if args.method == 'proformer':
-            model_kwargs['encoding_type'] = params[args.method]['encoding_type']
-        log.info(f'{model_kwargs}')
-        model = method.Model(
-            num_classes=2,
-            **model_kwargs
-        )
+        model_list = []
+        for i in range(2):
+            model_kwargs = method.model_defaults(args.dataset)
+            log.info(f'{model_kwargs}')
+            model = method.Model(
+                num_classes=2,
+                **model_kwargs
+            )
+            model_list.append(model)
         
         # train
-        trainer = method.Trainer(model, train_dataset, args)
+        trainer_list = [
+            method.Trainer(model, train_dataset, args) 
+            for model, train_dataset in zip(model_list, train_dataset_list)
+        ]
         if args.t > 0:
-            trainer.fit(log)
+            for i, trainer in enumerate(trainer_list):
+                log.info(f'training an individual model for task {i}...')
+                trainer.fit(log)
+
+        for task_id, trainer in enumerate(trainer_list):
+            log.info(f'model {task_id} trained? {trainer.istrained}')
 
         # evaluate
         preds = []
@@ -115,7 +128,13 @@ def main(cfg):
             # form a test dataset for each test sequence
             x_test, y_test = test_data[i]
             test_dataset = datahandler.SyntheticSequentialTestDataset(args, x_train, y_train, x_test, y_test)
-            preds_rep, truths_rep = trainer.evaluate(test_dataset)
+
+            pattern = full_pattern[args.t:]
+            preds_rep = np.zeros(args.T - args.t)
+            for task_id, trainer in enumerate(trainer_list):
+                pred, truths_rep = trainer.evaluate(test_dataset)
+                preds_rep[pattern == task_id] = pred[pattern == task_id]
+
             preds.append(preds_rep)
             truths.append(truths_rep)
         preds = np.array(preds)
@@ -143,6 +162,9 @@ def main(cfg):
     }
     with open('outputs.pkl', 'wb') as f:
         pickle.dump(outputs, f)
+
+    # save last model
+    torch.save(trainer.model.state_dict(), "model.pth")
 
 
 if __name__ == "__main__":

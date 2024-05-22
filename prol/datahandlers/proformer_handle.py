@@ -34,7 +34,7 @@ class SyntheticSequentialDataset(Dataset):
         else:
             s = r+self.c  # select the next datum
 
-        id = list(range(r, r+self.contextlcength)) + [s]
+        id = list(range(r, r+self.c)) + [s]
 
         data = self.data[id].unsqueeze(-1)
         labels = self.targets[id]

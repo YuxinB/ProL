@@ -1,3 +1,6 @@
+
+patterns_file: 'synthetic_50'
+
 t: 500
 method: "mlp"
 multihop: True
