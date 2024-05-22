@@ -50,7 +50,7 @@ def draw_synthetic_samples(flip):
     x = l * np.random.uniform(-2, -1) + (1-l) * np.random.uniform(1, 2)
     return x, y
 
-def get_synthetic_data(N, total_time_steps, seed=1996):
+def get_synthetic_data(N, total_time_steps, seed=1996, markov=False, pattern=None):
     """Get synthetic data sequence drawn from the stochastic process
 
     Parameters
@@ -63,8 +63,12 @@ def get_synthetic_data(N, total_time_steps, seed=1996):
     -------
     index sequence
     """
-    unit = get_cycle(N)
-    pattern = np.array((unit * math.ceil(total_time_steps/(len(unit))))[:total_time_steps]).astype("bool")
+    if markov:
+        pattern = pattern[:total_time_steps].astype("bool")
+    else:
+        unit = get_cycle(N)
+        pattern = np.array((unit * math.ceil(total_time_steps/(len(unit))))[:total_time_steps]).astype("bool")
+    
     data = np.zeros((total_time_steps, 2)).astype('float')
     np.random.seed(seed)
     data[pattern] = np.array([draw_synthetic_samples(True) for _ in range(sum(pattern))])
@@ -354,7 +358,12 @@ def get_markov_chain(num_tasks, T, N, seed):
     N : repeating number
     seed : random seed
     """
-    if num_tasks == 3:
+    if num_tasks == 2:
+        P = np.array([
+            [0.2, 0.8],
+            [0.6, 0.4]
+        ])
+    elif num_tasks == 3:
         P = np.array([
             [0.2, 0.7, 0.1],
             [0.5, 0.3, 0.2],

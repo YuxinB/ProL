@@ -8,9 +8,15 @@ from tqdm.auto import tqdm
 import pickle
 
 import hydra
+from hydra.utils import get_original_cwd
 import logging
 
-from prol.process import get_synthetic_data
+from prol.process import (
+    get_synthetic_data,
+    get_markov_chain
+)
+
+import pathlib
 
 class SetParams:
     def __init__(self, dict) -> None:
@@ -30,18 +36,26 @@ log = logging.getLogger(__name__)
 @hydra.main(config_path=".", config_name="config")
 def main(cfg):
 
+    cwd = pathlib.Path(get_original_cwd())
+
+    # load the saved indicies
+    patterns_file = cwd / f'{cfg.patterns_file}.pkl'
+    with open(patterns_file, 'rb') as f:
+        patterns_dict = pickle.load(f)
+
     # input parameters
     params = {
         # experiment params
         "dataset": "synthetic",
+        "seq_file": cfg.patterns_file,
         "method": cfg.method,
-        "N": 20,                     # time between two task switches                   
+        "N": patterns_dict["N"],                     # time between two task switches                   
         "t": cfg.t,                  # training time
-        "T": 5000,                   # future time horizon
+        "T": patterns_dict["T"],                   # future time horizon
         "seed": 1996,
         "device": cfg.device,
-        "reps": 100,                 # number of test reps
-        "outer_reps": 3,
+        "reps": 20,                 # number of test reps
+        "outer_reps": patterns_dict["outer_reps"],
 
         # proformer
         "proformer" : {
@@ -59,9 +73,23 @@ def main(cfg):
     args = SetParams(params)
     log.info(f'{params}')
 
+    # get the task patterns fromt the Markov chain
+    cwd = pathlib.Path(get_original_cwd()) 
+    fname = cwd / f'{args.seq_file}.pkl'
+    with open(fname, 'rb') as f:
+        saved = pickle.load(f)
+    full_pattern_list = saved['pattern']
+
     risk_list = []
+    raw_metrics = {
+        "t": args.t,
+        "preds": [],
+        "truths": []
+    }
     for outer_rep in range(args.outer_reps):
         log.info(" ")
+
+        full_pattern = full_pattern_list[outer_rep]
         
         # get a training sequence
         seed = args.seed * outer_rep * 2357
@@ -69,7 +97,9 @@ def main(cfg):
             x_train, y_train = get_synthetic_data(
                 N=args.N,
                 total_time_steps=args.t,
-                seed=seed
+                seed=seed,
+                markov=True,
+                pattern=full_pattern
             )
         else:
             x_train, y_train = get_synthetic_data(
@@ -77,10 +107,18 @@ def main(cfg):
                 total_time_steps=300,
                 seed=seed
             ) # dummy training data for t = 0 case
+            idx = np.random.permutation(len(y_train))
+            x_train, y_train = x_train[idx], y_train[idx]
 
         # sample a bunch of test sequences
         test_data = [
-            get_synthetic_data(args.N, args.T, seed=seed+1000*(inner_rep+1))
+            get_synthetic_data(
+                args.N, 
+                args.T, 
+                seed=seed+1000*(inner_rep+1),
+                markov=True,
+                pattern=full_pattern
+            )
             for inner_rep in range(args.reps)
         ]
 
@@ -121,6 +159,10 @@ def main(cfg):
         preds = np.array(preds)
         truths = np.array(truths)
 
+        # store raw predictions and truths
+        raw_metrics['preds'].append(preds)
+        raw_metrics['truths'].append(truths)
+
         # compute metrics
         instantaneous_risk = np.mean(preds != truths, axis=0).squeeze()
         std_error = np.std(preds != truths, axis=0).squeeze()
@@ -139,7 +181,8 @@ def main(cfg):
         "risk": risk,
         "ci_risk": ci_risk, 
         "inst_risk": instantaneous_risk,
-        "ci": ci
+        "ci": ci, 
+        "raw_metrics": raw_metrics
     }
     with open('outputs.pkl', 'wb') as f:
         pickle.dump(outputs, f)
