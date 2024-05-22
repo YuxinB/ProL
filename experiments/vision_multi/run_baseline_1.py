@@ -1,5 +1,5 @@
 '''
-Baseline 1 (Oracle) for Markov (case 3) exps
+Indepedent (case 2) Exp
 '''
 import importlib
 import torch
@@ -39,27 +39,22 @@ log = logging.getLogger(__name__)
 def main(cfg):
     cwd = pathlib.Path(get_original_cwd())
 
-    # load the saved indicies
-    indices_file = cwd / f'indices/{cfg.indices_file}.pkl'
-    with open(indices_file, 'rb') as f:
-        total_indices = pickle.load(f)
-
     # input parameters
     params = {
         # dataset
-        "dataset": total_indices["dataset"],
-        "task": total_indices["task"],    # task specification
+        "dataset": cfg.dataset,
+        "task": cfg.task,    # task specification
         "indices_file": cfg.indices_file, # 'mnist_00-51-47', 'cifar-10_02-12-13'
 
         # experiment
         "method": cfg.method,         # select from {proformer, cnn, mlp, timecnn}
-        "N": total_indices["N"],                     # time between two task switches                   
+        "N": 10,                     # time between two task switches                   
         "t": cfg.t,                  # training time
-        "T": total_indices["T"],                   # future time horizon
+        "T": 5000,                   # future time horizon
         "seed": 1996,   
         "device": cfg.device,          # device
-        "reps": total_indices["inner_reps"],                 # number of test reps
-        "outer_reps": total_indices["outer_reps"],         
+        "reps": 100,                 # number of test reps
+        "outer_reps": 3,         
               
         # training params
         "lr": 1e-3,         
@@ -87,15 +82,20 @@ def main(cfg):
     )
     maplab = lambda lab : mapdict[lab]
 
+    # unit = get_multi_cycle(args.N, len(args.task))
+    # full_pattern = np.array((unit * math.ceil(args.T/(len(unit))))[:args.T]).astype("int")
+
+    # load the saved indicies
+    indices_file = cwd / f'indices/{args.indices_file}.pkl'
+    with open(indices_file, 'rb') as f:
+        total_indices = pickle.load(f)
+
     # get full task pattern
-    full_pattern_list = total_indices['full_pattern']
+    full_pattern = total_indices['full_pattern']
 
     risk_list = []
     for outer_rep in range(args.outer_reps):
         log.info(" ")
-
-        # get the corresponding task pattern
-        full_pattern = full_pattern_list[outer_rep]
         
         # get a training sequence
         train_SeqInd = total_indices[args.t][outer_rep]['train']
