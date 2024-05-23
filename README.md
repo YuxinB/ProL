@@ -4,7 +4,7 @@ This repo contains code for prospective learning experiments.
 
 ## Usage
 
-* Dependendies: CUDA Toolkit 12.1
+* Dependendies: CUDA Toolkit 12.1, pytorch 2.3.0
 * Set up the conda environment:
 
     ```
