@@ -6,6 +6,7 @@ import tqdm.auto as tqdm
 DISC = True
 gamma = 0.9
 
+#%%
 
 class Data_Scenario3():
     def __init__(self, p=0.9, τ=30, max_t=1000):
@@ -91,10 +92,8 @@ class Data_Scenario3():
             errs.append(err_seed)
         errs = np.array(errs)
         return errs
-
-
-
-
+    
+# %%
 if __name__ == "__main__":
     np.random.seed(0)
     p=0.1
@@ -104,6 +103,11 @@ if __name__ == "__main__":
     times = np.arange(2, run_t-1)
 
     dat = Data_Scenario3(p, run_t, max_t)
+
+    y_train, y_test = dat.get_samples(20)
+    file = 'results/scn3_realization.npy'
+    np.save(file, y_train)
+
     errs_erm = dat.get_errs(seeds, 0)
     errs_prospective = dat.get_errs(seeds, 1)
 

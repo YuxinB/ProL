@@ -16,8 +16,6 @@ There is MDP such that
 The goal is a to find a sequence h_{>t} that minimizes the expected discounted loss
 """
 
-
-
 class Data_Scenario4():
     def __init__(self, p=0.9, τ=30, max_t=1000):
         self.p = [[p, 1-p], [1-p, p]]
@@ -147,6 +145,16 @@ def eval_mdp(pred, z_t):
 
 
 def main():
+
+    Z_t, A_t, _ = get_data(20)
+    print(Z_t)
+    print(A_t)
+    out = {
+        "outcomes": Z_t, 
+        "actions": A_t
+    }
+    file = 'results/scn4_realization.npy'
+    np.save(file, out, allow_pickle=True)
 
     seeds = 100000
     run_t = 50
