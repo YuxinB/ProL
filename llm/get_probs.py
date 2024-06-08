@@ -1,4 +1,5 @@
 import transformers
+import tqdm
 import torch
 import numpy as np
 
@@ -8,9 +9,9 @@ from colorama import Fore, Style
 from transformers import AutoTokenizer
 from transformers import pipeline
 
-def get_prompt():
 
-    prefix = "Generate the outcomes of 10 Bernoulli trials with probability of generating 0 is 0.5, 1 is also 0.5:\n\n"
+def get_prompt():
+    prefix = "Generate outcomes of 10 Bernoulli trials where 0 is generated with probability 0.75 and 1 with probability 0.25\n\n"
 
     prompts = []
     for i in range(1024):
@@ -22,7 +23,7 @@ def get_prompt():
 
 def gen_txt(model_id):
 
-    device = "cuda:1"
+    device = "cuda:0"
 
     tokenizer = AutoTokenizer.from_pretrained(model_id)
     model = AutoModelForCausalLM.from_pretrained(
@@ -40,11 +41,14 @@ def gen_txt(model_id):
     prompts = get_prompt()
 
     all_log_prob = []
-    for pr in prompts:
+    for pr in tqdm.tqdm(prompts):
         inp_tokens = tokenizer([pr], return_tensors="pt")
 
         rvs = pr.split("\n\n")[1]
-        rv_tokens = tokenizer.encode(rvs)[2:]
+        if "llama" in model_id:
+            rv_tokens = tokenizer.encode(rvs)[2:]
+        else:
+            rv_tokens = tokenizer.encode(rvs)[1:]
 
         ln = len(pr), len(rvs)
         tok_ln = len(inp_tokens["input_ids"][0])
@@ -75,9 +79,9 @@ def gen_txt(model_id):
             log_prob_list.append(log_prob)
         all_log_prob.append(log_prob_list)
     all_log_prob = np.array(all_log_prob)
-    import ipdb; ipdb.set_trace() 
 
-    np.save("data/gen_probs.npy", all_log_prob)
+    mname = model_id.split("/")[1]
+    np.save("data/gen_probs_%s.npy" % mname, all_log_prob)
 
 
 
@@ -88,7 +92,6 @@ if __name__ == "__main__":
                    "google/gemma-7b",
                   ]
     midx = 2
-    pidx = 1
 
     mname = model_names[midx]
     print("Model: %s" % mname)

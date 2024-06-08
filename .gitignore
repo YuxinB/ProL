@@ -12,3 +12,4 @@ env
 exps
 wandb
 .DS_Store
+prol.egg-info

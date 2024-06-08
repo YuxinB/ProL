@@ -9,9 +9,10 @@ from transformers import AutoTokenizer
 from transformers import pipeline
 
 def get_prompt():
-    txt = "Simulate the outcomes of 10 trials generated from a Bernoulli distribution with probability p=0.5\n\n0101"
+    txt = "Complet the sequence of the next 10 trials given the first 20 trials are as follows \n\n"
+    trials = "01110110100111011100"
 
-    return txt
+    return txt + trials
 
 
 def gen_txt(model_id, prompt):
