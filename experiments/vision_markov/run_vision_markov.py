@@ -33,7 +33,7 @@ def get_modules(name):
 
 log = logging.getLogger(__name__)
 
-@hydra.main(config_path=".", config_name="config_mnist")
+@hydra.main(config_path=".", config_name="config_cifar10")
 def main(cfg):
     cwd = pathlib.Path(get_original_cwd())
 
