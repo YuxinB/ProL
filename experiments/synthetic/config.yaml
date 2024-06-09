@@ -1,4 +1,9 @@
 t: 500
+method: "mlp"
+multihop: True
+device: "cuda:0"
+epochs: 50
+batchsize: 128
 
 defaults:
   - override hydra/launcher: joblib
