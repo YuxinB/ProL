@@ -16,7 +16,8 @@ class Data_Scenario3():
     def get_samples(self, t):
         y0 = np.random.choice([0, 1])
         y_seq = [y0]
-        for _ in range(self.max_t-1):
+        # for _ in range(self.max_t-1):
+        for _ in range(t + 20 - 1):
             y_seq.append(np.random.choice([0, 1], p=self.p[y_seq[-1]]))
         y_train, y_test = y_seq[:t], y_seq[t:]
         return y_train, y_test
@@ -40,7 +41,7 @@ class Data_Scenario3():
 
     def estimator_erm(self, samples):
         p_hat = np.mean(samples)
-        ntest = self.max_t - len(samples)
+        ntest = 20
         return np.ones(ntest) * p_hat
 
     def estimator_prospective(self, samples):
@@ -65,7 +66,7 @@ class Data_Scenario3():
         p_hat = []
         ystart = samples[-1]
 
-        for t in range(self.max_t - len(samples)):
+        for t in range(20):
             if np.abs(cur_probs[ystart, 0] - 0.5) < 1e-5:
                 ycur = np.random.choice([0, 1])
             else:
@@ -98,9 +99,9 @@ class Data_Scenario3():
 if __name__ == "__main__":
     np.random.seed(0)
     p=0.1
-    seeds = 100000
-    max_t = 100
-    run_t = 20
+    seeds = 10000
+    max_t = 90
+    run_t = 30
     times = np.arange(2, run_t-1)
 
     dat = Data_Scenario3(p, run_t, max_t)
@@ -130,7 +131,7 @@ if __name__ == "__main__":
         'std_pr': std_pr,
     }
     if DISC:
-        np.save("scenario3_disc_4.npy", info, allow_pickle=True)
+        np.save("scenario3_disc_4_2.npy", info, allow_pickle=True)
     else:
         np.save("scenario3_avg.npy", info, allow_pickle=True)
 
@@ -147,8 +148,8 @@ if __name__ == "__main__":
                     'Bayes risk'
                    ])
     else:
-        # bayes_err = 0.357
-        bayes_err = 1. / 6
+        bayes_err = 0.357
+        #bayes_err = 1. / 6
         plt.plot(times, np.ones_like(times) * bayes_err, '--', label='Bayes Optimal', color='black')
         plt.ylabel("Discounted Prospective risk")
         plt.legend(['Maximum likelihood estimator',
@@ -169,6 +170,8 @@ if __name__ == "__main__":
     # plt.savefig("scenario3_avg.pdf", bbox_inches='tight')
 
     if DISC:
-        plt.savefig("scenario3_disc.pdf", bbox_inches='tight')
-    else:
-        plt.savefig("scenario3_avg.pdf", bbox_inches='tight')
+        pass
+        # plt.savefig("scenario3_disc.pdf", bbox_inches='tight')
+    else: 
+        pass
+        # plt.savefig("scenario3_avg.pdf", bbox_inches='tight')
