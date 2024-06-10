@@ -58,6 +58,13 @@ std_errs = np.std(errs, axis=1) / np.sqrt(seeds)
 avg_errs_b = np.mean(errs_b, axis=1)
 std_errs_b = np.std(errs_b, axis=1) / np.sqrt(seeds)
 
+info = {
+        'avg_errs': avg_errs,
+        'std_errs': std_errs,
+}
+np.save('scenario1.npy', info, allow_pickle=True)
+    
+
 plt.style.use("seaborn-v0_8-whitegrid")
 sns.set(context='poster',
         style='ticks',
@@ -83,5 +90,5 @@ plt.legend(['Maximum likelihood estimator',
             'Mode of Bayes Posterior \n(alpha=2, beta=4)',
             'Bayes Optimal'])
 
-plt.savefig("scenario1.pdf", bbox_inches='tight')
+# plt.savefig("scenario1.pdf", bbox_inches='tight')
 
