@@ -1,0 +1,21 @@
+### CIFAR10 ###
+
+dataset: "cifar-10"
+task: [[0, 1], [1, 0]]
+indices_file: 'cifar-10_16-15-07'
+
+t: 0
+method: "resnet"
+multihop: True
+device: "cuda:0"
+epochs: 50
+batchsize: 32
+augment: True
+
+defaults:
+  - override hydra/launcher: joblib
+
+hydra:
+  launcher:
+    # override the number of jobs for joblib
+    n_jobs: 1

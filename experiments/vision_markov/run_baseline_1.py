@@ -35,7 +35,7 @@ def get_modules(name):
 
 log = logging.getLogger(__name__)
 
-@hydra.main(config_path=".", config_name="config_cifar10")
+@hydra.main(config_path=".", config_name="config_mnist")
 def main(cfg):
     cwd = pathlib.Path(get_original_cwd())
 
@@ -91,6 +91,11 @@ def main(cfg):
     full_pattern_list = total_indices['full_pattern']
 
     risk_list = []
+    raw_metrics = {
+        "t": args.t,
+        "preds": [],
+        "truths": []
+    }
     for outer_rep in range(args.outer_reps):
         log.info(" ")
 
@@ -171,6 +176,10 @@ def main(cfg):
         preds = np.array(preds)
         truths = np.array(truths)
 
+        # store raw predictions and truths
+        raw_metrics['preds'].append(preds)
+        raw_metrics['truths'].append(truths)
+
         # compute metrics
         instantaneous_risk = np.mean(preds != truths, axis=0).squeeze()
         std_error = np.std(preds != truths, axis=0).squeeze()
@@ -189,7 +198,8 @@ def main(cfg):
         "risk": risk,
         "ci_risk": ci_risk, 
         "inst_risk": instantaneous_risk,
-        "ci": ci
+        "ci": ci,
+        "raw_metrics": raw_metrics
     }
     with open('outputs.pkl', 'wb') as f:
         pickle.dump(outputs, f)

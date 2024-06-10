@@ -35,10 +35,10 @@ python run_vision_multi.py -m device='cuda:0' method="resnet" epochs=1000 batchs
 python run_vision_multi.py -m device='cuda:1' method="timeresnet" epochs=1000 batchsize=64 t=0,200,500,700,1000,1200,1500,1700,2000,2500,3000,4000 hydra.launcher.n_jobs=8
 
 # prosp. transformer
-python run_vision_multi.py -m device='cuda:3' method="conv_proformer" multihop=True epochs=300 batchsize=16 t=0,200,500,700,1000,1200,1500,1700,2000,2500,3000,4000 hydra.launcher.n_jobs=3
+python run_vision_multi.py -m device='cuda:1' method="conv_proformer" multihop=True epochs=300 batchsize=16 t=0,200,500,700,1000,1200,1500,1700,2000,2500,3000,4000 hydra.launcher.n_jobs=1
 
 # transformer
-python run_vision_multi.py -m device='cuda:0' method="conv_proformer" multihop=False epochs=300 batchsize=16 t=0,200,500,700,1000,1200,1500,1700,2000,2500,3000,4000 hydra.launcher.n_jobs=3
+python run_vision_multi.py -m device='cuda:2' method="conv_proformer" multihop=False epochs=300 batchsize=16 t=0,200,500,700,1000,1200,1500,1700,2000,2500,3000,4000 hydra.launcher.n_jobs=1
 
 
 # # lower bound baseline

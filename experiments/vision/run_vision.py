@@ -80,7 +80,7 @@ def main(cfg):
     log.info(f'{params}')
 
     # get source dataset
-    root = '/cis/home/adesilva/ashwin/research/ProL/data'
+    root = 'path/to/data_folder'
     torch_dataset = get_torch_dataset(root, name=args.dataset)
     
     # get indices for each task
