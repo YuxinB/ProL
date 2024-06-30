@@ -51,7 +51,7 @@ def gen_txt(model_id, bernoulli_p):
     torch.compile(model, mode="reduce-overhead", fullgraph=True)
 
     np.random.seed(0)
-    seeds = 100
+    seeds = 1
     all_errs = []
     for n in tqdm.tqdm(range(2, 100, 6)):
         cur_errs = []
