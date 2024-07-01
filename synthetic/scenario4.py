@@ -178,7 +178,7 @@ def main():
         'all_erm': all_erm,
         'all_pr': all_pr,
     }
-    np.save("scenario4_disc.npy", info, allow_pickle=True)
+    np.save("data/scenario4_disc.npy", info, allow_pickle=True)
 
     plt.style.use("seaborn-v0_8-whitegrid")
     sns.set(context='poster',
@@ -201,7 +201,7 @@ def main():
                ])
 
     plt.show()
-    plt.savefig("scenario4_disc.pdf", bbox_inches='tight')
+    plt.savefig("plots/scenario4_disc.pdf", bbox_inches='tight')
 
 
 

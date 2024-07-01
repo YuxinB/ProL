@@ -153,7 +153,7 @@ def main():
     max_t = run_t + 100
     times = np.arange(5, run_t-1)
 
-    info = np.load("scenario4_disc.npy", allow_pickle=True).item()
+    info = np.load("data/scenario4_disc.npy", allow_pickle=True).item()
     all_erm = info['all_erm'] 
     all_pr = info['all_pr'] 
 
@@ -183,7 +183,7 @@ def main():
                ])
 
     plt.show()
-    plt.savefig("scenario4_disc_v2.pdf", bbox_inches='tight')
+    plt.savefig("plots/scenario4_disc_v2.pdf", bbox_inches='tight')
 
 
 

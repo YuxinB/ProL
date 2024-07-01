@@ -131,9 +131,9 @@ if __name__ == "__main__":
         'std_pr': std_pr,
     }
     if DISC:
-        np.save("scenario3_disc_4_2.npy", info, allow_pickle=True)
+        np.save("data/scenario3_disc_4_2.npy", info, allow_pickle=True)
     else:
-        np.save("scenario3_avg.npy", info, allow_pickle=True)
+        np.save("data/scenario3_avg.npy", info, allow_pickle=True)
 
     plt.plot(times, avg_erm)
     plt.plot(times, avg_pr)
@@ -167,7 +167,7 @@ if __name__ == "__main__":
 
     plt.title("Dependent samples from Markov Chain")
     plt.xlabel("Number of samples / Time (t)")
-    # plt.savefig("scenario3_avg.pdf", bbox_inches='tight')
+    # plt.savefig("plots/scenario3_avg.pdf", bbox_inches='tight')
 
     if DISC:
         pass

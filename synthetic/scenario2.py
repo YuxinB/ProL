@@ -108,7 +108,7 @@ if __name__ == "__main__":
         'avg_pr': avg_pr,
         'std_pr': std_pr
     }
-    np.save('scenario2.npy', info, allow_pickle=True)
+    np.save('data/scenario2.npy', info, allow_pickle=True)
 
     plt.plot(times, avg_erm)
     plt.plot(times, avg_pr)
@@ -129,6 +129,6 @@ if __name__ == "__main__":
     plt.legend(['Maximum likelihood estimator',
                 'Time-aware empirical risk minimization',
                ])
-    # plt.savefig("scenario2.pdf", bbox_inches='tight')
+    # plt.savefig("plots/scenario2.pdf", bbox_inches='tight')
 
     plt.show()
