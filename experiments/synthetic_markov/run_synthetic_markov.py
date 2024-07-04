@@ -48,6 +48,7 @@ def main(cfg):
         # experiment params
         "dataset": "synthetic",
         "seq_file": cfg.patterns_file,
+        "eps": cfg.eps,
         "method": cfg.method,
         "N": patterns_dict["N"],                     # time between two task switches                   
         "t": cfg.t,                  # training time
@@ -73,12 +74,12 @@ def main(cfg):
     args = SetParams(params)
     log.info(f'{params}')
 
-    # get the task patterns fromt the Markov chain
+    # get the task patterns from the Markov chain
     cwd = pathlib.Path(get_original_cwd()) 
     fname = cwd / f'{args.seq_file}.pkl'
     with open(fname, 'rb') as f:
         saved = pickle.load(f)
-    full_pattern_list = saved['pattern']
+    full_pattern_list = saved[cfg.eps]
 
     risk_list = []
     raw_metrics = {

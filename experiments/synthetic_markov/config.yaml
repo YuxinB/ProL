@@ -1,5 +1,6 @@
 
-patterns_file: 'synthetic_50'
+patterns_file: 'synthetic_3'
+eps: 0.001
 
 t: 500
 method: "mlp"
