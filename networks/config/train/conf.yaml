@@ -1,18 +1,22 @@
 deploy: False
 seed: 0
-dev: 'cpu'
+dev: 'cuda:1'
 tag: scratch
 name: 'mlp_scenario2_period20'
 
 net:
   type: "prospective_mlp"  # mlp, prospective_mlp
 
+numseeds: 20
+tstart: 50
+tend: 2001
+tskip: 200
 
 train:
-  epochs: 20
+  epochs: 100
 
 data:
-  bs: 64
+  bs: 32
   workers: 4
   path: "./data/synthetic/scenario2_period20.pkl"
 

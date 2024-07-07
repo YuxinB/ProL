@@ -7,7 +7,7 @@ def create_net(cfg):
     if cfg.net.type == 'mlp':
         net = MLP(1, 2, 256)
     elif cfg.net.type == 'prospective_mlp':
-        net = ProspectiveMLP(1, 2, 256)
+        net = ProspectiveMLP(cfg, 1, 2, 256)
     else:
         raise NotImplementedError
 
@@ -15,10 +15,10 @@ def create_net(cfg):
 
 
 class TimeEmbedding(nn.Module):
-    def __init__(self, dim):
+    def __init__(self, dev, dim):
         super(TimeEmbedding, self).__init__()
         self.freqs = (2 * np.pi) / (torch.arange(2, dim + 1, 2))
-        self.freqs = self.freqs.unsqueeze(0)
+        self.freqs = self.freqs.unsqueeze(0).to(dev)
 
     def forward(self, t):
         self.sin = torch.sin(self.freqs * t)
@@ -27,9 +27,9 @@ class TimeEmbedding(nn.Module):
         return torch.cat([self.sin, self.cos], dim=-1)
 
 class DiscreteTime(nn.Module):
-    def __init__(self, dim):
+    def __init__(self, dev, dim):
         super(DiscreteTime, self).__init__()
-        self.mode = torch.arange(1, dim + 1)
+        self.mode = torch.arange(1, dim + 1).to(dev)
 
     def forward(self, t):
         t = (t % self.mode)
@@ -49,12 +49,11 @@ class MLP(nn.Module):
         x = self.fc3(x)
         return x
 
-t 
 class ProspectiveMLP(nn.Module):
-    def __init__(self, in_dim, out_dim, hidden_dim, tdim=50):
+    def __init__(self, cfg, in_dim, out_dim, hidden_dim, tdim=50):
         super(ProspectiveMLP, self).__init__()
-        # self.time_embed = TimeEmbedding(tdim)
-        self.time_embed = DiscreteTime(tdim)
+        self.time_embed = TimeEmbedding(cfg.dev, tdim)
+        # self.time_embed = DiscreteTime(cfg.dev, tdim)
         in_dim += tdim
 
         self.fc1 = nn.Linear(in_dim, hidden_dim)
@@ -63,7 +62,6 @@ class ProspectiveMLP(nn.Module):
 
     def forward(self, x, t):
         tembed = self.time_embed(t.reshape(-1, 1))
-        # import ipdb; ipdb.set_trace()
         x = torch.cat([x, tembed], dim=-1)
         x = torch.relu(self.fc1(x))
         x = torch.relu(self.fc2(x))
