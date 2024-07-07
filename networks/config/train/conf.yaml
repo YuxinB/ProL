@@ -1,0 +1,36 @@
+deploy: False
+seed: 0
+dev: 'cpu'
+tag: scratch
+name: 'mlp_scenario2_period20'
+
+net:
+  type: "prospective_mlp"  # mlp, prospective_mlp
+
+
+train:
+  epochs: 20
+
+data:
+  bs: 64
+  workers: 4
+  path: "./data/synthetic/scenario2_period20.pkl"
+
+
+# Nested configs. Disable hydra logging
+defaults:
+  - _self_
+  - override hydra/job_logging: disabled
+  - override hydra/hydra_logging: disabled
+
+# Disable hydra directory structure
+hydra:
+  output_subdir: Null
+  job:
+    chdir: False
+  run:
+    dir: .
+
+  sweep:
+    dir: .
+    subdir: .
