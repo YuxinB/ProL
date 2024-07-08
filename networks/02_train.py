@@ -1,4 +1,7 @@
 import hydra 
+import os
+import numpy as np
+import pickle
 from utils.init import init_wandb, set_seed, open_log
 from utils.data import create_dataloader
 from utils.net import create_net
@@ -13,17 +16,26 @@ def main(cfg):
 
     net = create_net(cfg)
 
-    for seed in range(1):
-        for t in range(500, 501, 10):
+    allerrs_t = []
+    for t in range(cfg.tstart, cfg.tend, cfg.tskip):
+        all_errs = []
+        for seed in range(cfg.numseeds):
 
             # Create new network if fine-tuning
+            loaders = create_dataloader(cfg, t, seed)
             if cfg.fine_tune is None:
                 net = create_net(cfg)
 
-            loaders = create_dataloader(cfg, t, seed)
-            train(cfg, net, loaders)
+            errs = train(cfg, net, loaders)
+            all_errs.append(errs)
+            print("Time %d, Seed %d, Error: %.4f" % (t, seed, np.mean(errs)))
+        all_errs = np.array(all_errs)
+        allerrs_t.append((t, all_errs))
 
-    import ipdb; ipdb.set_trace()
+    fdir = os.path.join('checkpoints', cfg.tag)
+    os.makedirs(fdir, exist_ok=True)
+    with open(os.path.join(fdir, cfg.name + "_errs.pkl"), 'wb') as fp:
+        pickle.dump(allerrs_t, fp)
 
 
 if __name__ == "__main__":
