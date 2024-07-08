@@ -1,13 +1,14 @@
 deploy: False
 seed: 0
 dev: 'cuda:1'
+
 tag: scratch
 name: 'mlp_scenario2_period20'
 
 net:
   type: "prospective_mlp"  # mlp, prospective_mlp
 
-numseeds: 20
+numseeds: 10
 tstart: 50
 tend: 2001
 tskip: 200

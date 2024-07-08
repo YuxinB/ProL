@@ -26,10 +26,12 @@ def main(cfg):
             net = create_net(cfg)
             errs = train(cfg, net, loaders)
             all_errs.append(errs)
+            print("Time %d, Seed %d, Error: %.4f" % (t, seed, np.mean(errs)))
         all_errs = np.array(all_errs)
         allerrs_t.append((t, all_errs))
 
     fdir = os.path.join('checkpoints', cfg.tag)
+    os.makedirs(fdir, exist_ok=True)
     with open(os.path.join(fdir, cfg.name + "_errs.pkl"), 'wb') as fp:
         pickle.dump(allerrs_t, fp)
 

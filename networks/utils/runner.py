@@ -27,9 +27,7 @@ def train(cfg, net, loaders):
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-        if ep % 20 == 0:
-            print("Epoch: %d, Loss: %.4f" % (ep, loss.item()))
-
+    print("Epoch: %d, Loss: %.4f" % (ep, loss.item()))
     net.eval()
 
     errs = evaluate(cfg, net, testloader)
