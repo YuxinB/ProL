@@ -7,6 +7,11 @@ name: 'mlp_scenario2_period20'
 net:
   type: "prospective_mlp"  # mlp, prospective_mlp
 
+fine_tune: 
+  enable: False
+  past: 20
+
+bgd: False
 
 train:
   epochs: 20

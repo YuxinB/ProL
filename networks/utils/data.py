@@ -67,7 +67,7 @@ class SyntheticScenario2:
 
 
 class SyntheticDataset(Dataset):
-    def __init__(self, data_path, idx, run_id, test):
+    def __init__(self, data_path, idx, run_id, test, past=None):
         with open(data_path, 'rb') as fp:
             self.data = pickle.load(fp)
         self.x = torch.FloatTensor(self.data['x']) // 4
@@ -79,9 +79,16 @@ class SyntheticDataset(Dataset):
             self.y = self.y[run_id, :]
             self.t = self.t[run_id, :]
         else:
-            self.x = self.x[run_id, :idx]
-            self.y = self.y[run_id, :idx]
-            self.t = self.t[run_id, :idx]
+            if past is None:
+                # Create dataloader with full history
+                self.x = self.x[run_id, :idx]
+                self.y = self.y[run_id, :idx]
+                self.t = self.t[run_id, :idx]
+            else:
+                # Create dataloader with just recent history
+                self.x = self.x[run_id, idx-past:idx]
+                self.y = self.y[run_id, idx-past:idx]
+                self.t = self.t[run_id, idx-past:idx]
        
     def __len__(self):
         return len(self.y)
@@ -94,15 +101,15 @@ class SyntheticDataset(Dataset):
 
 
 def create_dataloader(cfg, t, seed):
-    train_dataset = SyntheticDataset(cfg.data.path, t, seed, False)
-    test_dataset = SyntheticDataset(cfg.data.path, t, seed, True)
+    past = cfg.fine_tune
+    train_dataset = SyntheticDataset(cfg.data.path, t, seed, False, past)
+    test_dataset = SyntheticDataset(cfg.data.path, t, seed, True, past)
 
     trainloader = DataLoader(train_dataset,
                             batch_size=cfg.data.bs,
                             shuffle=True, pin_memory=True,
                             num_workers=cfg.data.workers)
-    testloader = DataLoader(test_dataset,
-                            batch_size=cfg.data.bs,
+    testloader = DataLoader(test_dataset, batch_size=500,
                             shuffle=False, pin_memory=True,
                             num_workers=cfg.data.workers)
 

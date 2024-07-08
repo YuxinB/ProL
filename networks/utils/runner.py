@@ -3,7 +3,6 @@ import os
 import torch.nn as nn
 
 
-
 def train(cfg, net, loaders):
 
     dev = cfg.dev
@@ -27,7 +26,6 @@ def train(cfg, net, loaders):
             optimizer.step()
         print("Epoch: %d, Loss: %.4f" % (ep, loss.item()))
 
-    import ipdb; ipdb.set_trace()
     net.eval()
     save_net(net, cfg)
 

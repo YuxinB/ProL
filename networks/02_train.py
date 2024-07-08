@@ -11,12 +11,16 @@ def main(cfg):
     set_seed(cfg.seed)
     open_log(cfg)
 
+    net = create_net(cfg)
 
     for seed in range(1):
         for t in range(500, 501, 10):
 
+            # Create new network if fine-tuning
+            if cfg.fine_tune is None:
+                net = create_net(cfg)
+
             loaders = create_dataloader(cfg, t, seed)
-            net = create_net(cfg)
             train(cfg, net, loaders)
 
     import ipdb; ipdb.set_trace()
