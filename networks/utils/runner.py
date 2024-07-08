@@ -3,6 +3,8 @@ import numpy as np
 import os
 import torch.nn as nn
 
+from utils.bgd import BGD
+
 
 def train(cfg, net, loaders):
 
@@ -10,9 +12,12 @@ def train(cfg, net, loaders):
     trainloader, testloader = loaders
     criterion = nn.CrossEntropyLoss()
 
-    optimizer = torch.optim.SGD(net.parameters(), lr=0.01,
-                                momentum=0.9, nesterov=True,
-                                weight_decay=0.00001)
+    if cfg.bgd:
+        optimizer = BGD(net.parameters(), std_init=0.01)
+    else:
+        optimizer = torch.optim.SGD(net.parameters(), lr=0.01,
+                                    momentum=0.9, nesterov=True,
+                                    weight_decay=0.00001)
 
     net.train()
     net.to(cfg.dev)
@@ -21,12 +26,23 @@ def train(cfg, net, loaders):
         for dat, targets, time in trainloader:
             dat, targets = dat.to(dev), targets.to(dev)
             time = time.to(dev)
-            logits = net(dat, time)
 
-            loss = criterion(logits, targets)
-            optimizer.zero_grad()
-            loss.backward()
+            if cfg.bgd:
+                for mc_iter in range(10):
+                    optimizer.randomize_weights()
+                    logits = net(dat, time)
+                    loss = criterion(logits, targets)
+                    optimizer.zero_grad()
+                    loss.backward()
+                    optimizer.aggregate_grads()
+            else:
+                logits = net(dat, time)
+                loss = criterion(logits, targets)
+                optimizer.zero_grad()
+                loss.backward()
+
             optimizer.step()
+
     print("Epoch: %d, Loss: %.4f" % (ep, loss.item()))
     net.eval()
 
@@ -48,7 +64,6 @@ def evaluate(cfg, net, testloader):
         errs.append(err.cpu().numpy())
     errs = np.concatenate(errs)
     return errs
-
 
 
 def save_net(net, cfg):
