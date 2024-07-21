@@ -4,7 +4,7 @@ import pickle
 import matplotlib.pyplot as plt
 
 
-def plot1():
+def retro_vs_prospective():
     """
     Compare retrospective and prospective MLP algorithms
     """
@@ -64,9 +64,9 @@ def plot1():
     plt.savefig("figs/scenario2_syn.pdf", bbox_inches='tight')
 
 
-def plot2():
+def retro_vs_prospective_instantaneous():
     """
-    Plot the risk of one single run 
+    Risk of 
     """
     fnames = ["../checkpoints/scenario2/prospective_mlp_period20_errs.pkl",
               "../checkpoints/scenario2/retrospective_mlp_period20_errs.pkl",
@@ -114,7 +114,7 @@ def plot2():
     plt.savefig("figs/scenario2_inst.pdf", bbox_inches='tight')
 
 
-def plot3():
+def ftl_instantaneous():
     """
     Plot the risk of one single run 
     """
@@ -122,7 +122,6 @@ def plot3():
     with open(fname, "rb") as fp:
         info = pickle.load(fp)
 
-    # import ipdb; ipdb.set_trace()
     errs = []
     for i in range(len(info)):
         tstep = info[i][0]
@@ -154,7 +153,7 @@ def plot3():
     plt.savefig("figs/scenario2_ftl_inst.pdf", bbox_inches='tight')
 
 
-def plot4():
+def finetune_ep20_instantaneous():
     """
     Plot the risk of one single run 
     """
@@ -162,13 +161,11 @@ def plot4():
     with open(fname, "rb") as fp:
         info = pickle.load(fp)
 
-    # import ipdb; ipdb.set_trace()
     errs = []
     for i in range(len(info)):
         tstep = info[i][0]
         errs.append(info[i][1][0, tstep])
 
-    # import ipdb; ipdb.set_trace()
 
     errs = np.array(errs)[0:200]
     times = np.arange(len(errs))
@@ -198,7 +195,8 @@ def plot4():
 
     plt.savefig("figs/scenario2_finetune_inst.pdf", bbox_inches='tight')
 
-def plot5():
+
+def finetune_ep1_instantaneous():
     """
     Plot the risk of one single run 
     """
@@ -206,19 +204,16 @@ def plot5():
     with open(fname, "rb") as fp:
         info = pickle.load(fp)
 
-    # import ipdb; ipdb.set_trace()
     errs = []
     for i in range(len(info)):
         tstep = info[i][0]
         errs.append(info[i][1][0, tstep])
 
-    # import ipdb; ipdb.set_trace()
-
     errs = np.array(errs)[0:200]
     times = np.arange(len(errs))
 
-    errs = np.cumsum(errs)
-    errs = errs / np.arange(1, len(errs)+1)
+    # errs = np.cumsum(errs)
+    # errs = errs / np.arange(1, len(errs)+1)
 
     for i in range(0, len(errs)+1, 10):
         # Vertical line
@@ -243,8 +238,66 @@ def plot5():
     plt.savefig("figs/scenario2_finetune1_inst.pdf", bbox_inches='tight')
 
 
-# plot1()
-# plot2()
-# plot3()
-plot4()
-plot5()
+def online_learners():
+
+    fnames = ["../checkpoints/scenario2/mlp_ft1_p20_errs.pkl",
+              "../checkpoints/scenario2/mlp_all_period20_errs.pkl"]
+
+    infos = []
+    for fname in fnames:
+        with open(fname, "rb") as fp:
+            info = pickle.load(fp)
+        infos.append(info)
+
+    all_errs = []
+    for info in infos:
+        errs = []
+        for i in range(len(info)):
+            tstep = info[i][0]
+            errs.append(info[i][1][0, tstep])
+        all_errs.append(errs)
+
+
+    all_errs[0] = np.cumsum(all_errs[0][0:200])
+    all_errs[1] = np.cumsum(all_errs[1][0:200])
+
+    all_errs[0] = all_errs[0] / np.arange(1, len(all_errs[0])+1)
+    all_errs[1] = all_errs[1] / np.arange(1, len(all_errs[1])+1)
+    all_errs = np.array(all_errs)
+
+    times = np.arange(len(all_errs[0]))
+
+    for i in range(0, len(all_errs[0])+1, 10):
+        # Vertical line
+        plt.axvline(x=i, color='black', linestyle='--', lw=0.5)
+        
+    # vertical line at t=1000
+    plt.style.use("seaborn-v0_8-whitegrid")
+    sns.set(context='poster',
+            style='ticks',
+            font_scale=0.85,
+            rc={'axes.grid':True,
+                'grid.color':'.9',
+                'grid.linewidth':0.75})
+
+    plt.plot(times, all_errs[0], c='C0')
+    plt.plot(times, all_errs[1], c='C1')
+
+    plt.scatter(times, all_errs[0], label="Follow-the-leader", s=1, alpha=0.7, c='C0')
+    plt.scatter(times, all_errs[1], label="Online-SGD", s=1, alpha=0.7, c='C1')
+
+
+    plt.ylabel("Risk")
+    plt.xlabel("Time (t)")
+    plt.legend(loc="upper right", markerscale=7., scatterpoints=1, fontsize=15)
+
+    plt.savefig("figs/scenario2_online.pdf", bbox_inches='tight')
+
+    plt.show()
+
+# retro_vs_prospective()
+# retro_vs_prospective_instantaneous()
+# finetune_ep20_instantaneous()
+# finetune_ep20_instantaneous()
+# finetune_ep1_instantaneous()
+online_learners()
