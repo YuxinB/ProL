@@ -21,9 +21,9 @@ def main(cfg):
         all_errs = []
         for seed in range(cfg.numseeds):
 
-            # Create new network if fine-tuning
+            # Create new network if not fine-tuning
             loaders = create_dataloader(cfg, t, seed)
-            if cfg.fine_tune is None:
+            if (cfg.fine_tune is None) and (cfg.bgd is None):
                 net = create_net(cfg)
 
             errs = train(cfg, net, loaders)

@@ -4,7 +4,6 @@ import pickle
 import matplotlib.pyplot as plt
 
 
-
 def plot1():
     """
     Compare retrospective and prospective MLP algorithms
