@@ -66,6 +66,69 @@ class SyntheticScenario2:
             pickle.dump(self.data, fp)
 
 
+class SyntheticScenario3:
+    """
+    Generate data from a markov process
+    """
+    def __init__(self, cfg):
+        self.seq_len = cfg.seq_len
+        self.num_seeds = cfg.num_seeds
+        self.period = cfg.period
+        self.cfg = cfg
+
+    def generate_data(self):
+        xseq, yseq, taskseq = [], [], []
+        tseq = []
+        for sd in range(self.num_seeds):
+            dat = self.gen_sequence(sd)
+            xseq.append(dat[0])
+            yseq.append(dat[1])
+            taskseq.append(dat[2])
+            tseq.append(np.arange(self.seq_len))
+
+        xseq = np.array(xseq)
+        yseq = np.array(yseq)
+        tseq = np.array(tseq)
+        taskseq = np.array(taskseq)
+
+        self.data = {'x': xseq,
+                     'y': yseq,
+                     't': tseq,
+                     'task': taskseq,
+                     'cfg': self.cfg}
+
+    def gen_sequence(self, seed):
+        np.random.seed(seed)
+
+        # generate a samples from from U[-2, -1] union U[2, 1]
+        x = np.random.uniform(1, 2, self.seq_len)
+        y = np.random.uniform(1, 2, self.seq_len)
+        xdat = np.concatenate((x, y))
+
+        # create list of tasks with period T
+        T = self.period
+        tind = np.array((np.arange(0, self.seq_len) % T) < (T // 2))
+        tind = tind.astype(int) * 2
+
+        # generate random sequence of 0s and 1s with len of tind
+        mask = np.random.choice([0, 1], size=len(tind))
+        tint = tind + mask
+
+        xmask1 = (tind < 2) * 2 - 1
+        xmask2 = (tind % 2) * 2 - 1
+
+        xmask = np.concatenate((xmask1, xmask2))
+        xdat = xdat * xmask
+
+
+        return Xdat, Ydat, tind
+
+    def store_data(self):
+        os.makedirs('data/synthetic', exist_ok=True)
+        with open('data/synthetic/scenario2_period%d.pkl' % self.period, 'wb') as fp:
+            pickle.dump(self.data, fp)
+
+
 class SyntheticDataset(Dataset):
     def __init__(self, data_path, idx, run_id, test, past=None):
         with open(data_path, 'rb') as fp:
