@@ -9,7 +9,8 @@ def main(cfg):
     set_seed(cfg.seed)
     open_log(cfg)
 
-    datagen = SyntheticScenario2(cfg)
+    # datagen = SyntheticScenario2(cfg)
+    datagen = SyntheticScenario3(cfg)
     datagen.generate_data()
     datagen.store_data()
 

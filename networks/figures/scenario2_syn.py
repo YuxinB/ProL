@@ -241,7 +241,9 @@ def finetune_ep1_instantaneous():
 def online_learners():
 
     fnames = ["../checkpoints/scenario2/mlp_ft1_p20_errs.pkl",
-              "../checkpoints/scenario2/mlp_all_period20_errs.pkl"]
+              "../checkpoints/scenario2/mlp_all_period20_errs.pkl",
+              "../checkpoints/scenario2/mlp_bgd_p20_errs.pkl",
+              ]
 
     infos = []
     for fname in fnames:
@@ -257,20 +259,15 @@ def online_learners():
             errs.append(info[i][1][0, tstep])
         all_errs.append(errs)
 
+    for i in range(3):
+        all_errs[i] = np.cumsum(all_errs[i][0:200])
 
-    all_errs[0] = np.cumsum(all_errs[0][0:200])
-    all_errs[1] = np.cumsum(all_errs[1][0:200])
+        all_errs[i] = all_errs[i] / np.arange(1, len(all_errs[i])+1)
 
-    all_errs[0] = all_errs[0] / np.arange(1, len(all_errs[0])+1)
-    all_errs[1] = all_errs[1] / np.arange(1, len(all_errs[1])+1)
     all_errs = np.array(all_errs)
-
     times = np.arange(len(all_errs[0]))
 
-    for i in range(0, len(all_errs[0])+1, 10):
-        # Vertical line
-        plt.axvline(x=i, color='black', linestyle='--', lw=0.5)
-        
+
     # vertical line at t=1000
     plt.style.use("seaborn-v0_8-whitegrid")
     sns.set(context='poster',
@@ -280,20 +277,90 @@ def online_learners():
                 'grid.color':'.9',
                 'grid.linewidth':0.75})
 
+    plt.figure(figsize=(5, 5))
+
+    for i in range(0, len(all_errs[0])+1, 10):
+        # Vertical line
+        plt.axvline(x=i, color='black', linestyle='--', lw=0.5)
+        
     plt.plot(times, all_errs[0], c='C0')
     plt.plot(times, all_errs[1], c='C1')
+    plt.plot(times, all_errs[2], c='C2')
 
     plt.scatter(times, all_errs[0], label="Follow-the-leader", s=1, alpha=0.7, c='C0')
     plt.scatter(times, all_errs[1], label="Online-SGD", s=1, alpha=0.7, c='C1')
+    plt.scatter(times, all_errs[2], label="Bayesian Gradient descent", s=1, alpha=0.7, c='C2')
 
 
-    plt.ylabel("Risk")
+    plt.ylabel("Avg. Risk (up to time t)")
     plt.xlabel("Time (t)")
-    plt.legend(loc="upper right", markerscale=7., scatterpoints=1, fontsize=15)
+    plt.legend(loc="upper right", markerscale=7., scatterpoints=1, fontsize=15,
+               frameon=True)
 
     plt.savefig("figs/scenario2_online.pdf", bbox_inches='tight')
 
-    plt.show()
+
+def online_learners_prospective():
+
+    fnames = ["../checkpoints/scenario2/mlp_ft1_p20_errs.pkl",
+              "../checkpoints/scenario2/mlp_all_period20_errs.pkl",
+              "../checkpoints/scenario2/mlp_bgd_p20_errs.pkl",
+              ]
+
+    infos = []
+    for fname in fnames:
+        with open(fname, "rb") as fp:
+            info = pickle.load(fp)
+        infos.append(info)
+
+    all_errs = []
+    for info in infos:
+        errs = []
+        for i in range(len(info)):
+            errs.append(np.mean(info[i][1][0]))
+        all_errs.append(errs)
+
+    for i in range(3):
+        all_errs[i] = all_errs[i][0:200]
+
+    #     all_errs[i] = np.cumsum(all_errs[i][0:200])
+    all_errs = np.array(all_errs)
+    times = np.arange(len(all_errs[0]))
+
+        
+    # vertical line at t=1000
+    plt.style.use("seaborn-v0_8-whitegrid")
+    sns.set(context='poster',
+            style='ticks',
+            font_scale=0.75,
+            rc={'axes.grid':True,
+                'grid.color':'.9',
+                'grid.linewidth':0.75})
+
+    plt.clf()
+    plt.figure(figsize=(5, 5))
+    plt.ylim([0, 1])
+
+    for i in range(0, len(all_errs[0])+1, 10):
+        # Vertical line
+        plt.axvline(x=i, color='black', linestyle='--', lw=0.5)
+
+
+    plt.plot(times, all_errs[0], c='C0')
+    plt.plot(times, all_errs[1], c='C1')
+    plt.plot(times, all_errs[2], c='C2')
+
+    plt.scatter(times, all_errs[0], label="Follow-the-leader", s=1, alpha=0.7, c='C0')
+    plt.scatter(times, all_errs[1], label="Online-SGD", s=1, alpha=0.7, c='C1')
+    plt.scatter(times, all_errs[2], label="Bayesian Gradient descent", s=1, alpha=0.7, c='C2')
+
+
+    plt.ylabel("Prospective Risk")
+    plt.xlabel("Time (t)")
+    plt.legend(loc="upper right", markerscale=7., scatterpoints=1, fontsize=15,
+               frameon=True)
+
+    plt.savefig("figs/scenario2_online_pr.pdf", bbox_inches='tight')
 
 # retro_vs_prospective()
 # retro_vs_prospective_instantaneous()
@@ -301,3 +368,4 @@ def online_learners():
 # finetune_ep20_instantaneous()
 # finetune_ep1_instantaneous()
 online_learners()
+online_learners_prospective()
