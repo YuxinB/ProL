@@ -6,8 +6,12 @@ import torch.nn as nn
 def create_net(cfg):
     if cfg.net.type == 'mlp':
         net = MLP(1, 2, 256)
+    elif cfg.net.type == 'mlp3':
+        net = MLP(2, 2, 256)
     elif cfg.net.type == 'prospective_mlp':
         net = ProspectiveMLP(cfg, 1, 2, 256)
+    elif cfg.net.type == 'prospective_mlp3':
+        net = ProspectiveMLP(cfg, 2, 2, 256)
     else:
         raise NotImplementedError
 
