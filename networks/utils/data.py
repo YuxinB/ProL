@@ -100,32 +100,55 @@ class SyntheticScenario3:
     def gen_sequence(self, seed):
         np.random.seed(seed)
 
-        # generate a samples from from U[-2, -1] union U[2, 1]
-        x = np.random.uniform(1, 2, self.seq_len)
-        y = np.random.uniform(1, 2, self.seq_len)
-        xdat = np.concatenate((x, y))
-
-        # create list of tasks with period T
+        # create task indices
         T = self.period
-        tind = np.array((np.arange(0, self.seq_len) % T) < (T // 2))
-        tind = tind.astype(int) * 2
+        cur_t = 0
+        tind = []
+        for i in range(self.seq_len):
+            tind.append(cur_t)
 
-        # generate random sequence of 0s and 1s with len of tind
-        mask = np.random.choice([0, 1], size=len(tind))
-        tint = tind + mask
+            # Every T steps, switch task
+            if (i + 1) % T == 0:
+                cur_t = 0
+            elif (i + 1) % (T // 2) == 0:
+                cur_t = 1
 
-        xmask1 = (tind < 2) * 2 - 1
-        xmask2 = (tind % 2) * 2 - 1
+            if cur_t <= 1:
+                # Change task with probability 0.2
+                if np.random.rand() < 0.2:
+                    cur_t = 2 - cur_t
+            else:
+                # Change task with probability 0.2
+                if np.random.rand() < 0.2:
+                    cur_t = 4 - cur_t
+        tind = np.array(tind)
 
-        xmask = np.concatenate((xmask1, xmask2))
-        xdat = xdat * xmask
+        # generate a samples from U[1, 2]
+        x1 = np.random.uniform(1, 2, self.seq_len)
+        x2 = np.random.uniform(1, 2, self.seq_len)
+        Xdat = np.stack([x1, x2]).T
 
+        # Generate labels 
+        Ydat = np.random.choice([0, 1], size=self.seq_len)
+
+        # Generate data points
+        tind_m = (tind + Ydat) % 4
+
+        # 0 -- (1, 1)
+        # 1 - (1, -1)
+        # 2 - (-1, -1)
+
+        xmask1 = 1 - (tind_m < 2) * 2
+        xmask2 = 1 - (tind_m >= 1) * (tind_m <= 2) * 2
+
+        xmask = np.stack([xmask1, xmask2]).T
+        Xdat = Xdat * xmask
 
         return Xdat, Ydat, tind
 
     def store_data(self):
         os.makedirs('data/synthetic', exist_ok=True)
-        with open('data/synthetic/scenario2_period%d.pkl' % self.period, 'wb') as fp:
+        with open('data/synthetic/scenario3_period%d.pkl' % self.period, 'wb') as fp:
             pickle.dump(self.data, fp)
 
 

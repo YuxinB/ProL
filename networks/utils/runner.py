@@ -11,21 +11,23 @@ def train(cfg, net, loaders):
     dev = cfg.dev
     trainloader, testloader = loaders
     criterion = nn.CrossEntropyLoss()
+    net.train()
+    net.to(cfg.dev)
 
     if cfg.bgd:
-        optimizer = BGD(net.parameters(), std_init=0.01)
+        params = [{'params': [p]} for p in net.parameters()]
+        optimizer = BGD(params, std_init=0.01)
     else:
         optimizer = torch.optim.SGD(net.parameters(), lr=0.01,
                                     momentum=0.9, nesterov=True,
                                     weight_decay=0.00001)
 
-    net.train()
-    net.to(cfg.dev)
-
     for ep in range(cfg.train.epochs):
         for dat, targets, time in trainloader:
             dat, targets = dat.to(dev), targets.to(dev)
             time = time.to(dev)
+
+            bs = dat.size(0)
 
             if cfg.bgd:
                 for mc_iter in range(10):
@@ -34,7 +36,7 @@ def train(cfg, net, loaders):
                     loss = criterion(logits, targets)
                     optimizer.zero_grad()
                     loss.backward()
-                    optimizer.aggregate_grads()
+                    optimizer.aggregate_grads(bs)
             else:
                 logits = net(dat, time)
                 loss = criterion(logits, targets)
