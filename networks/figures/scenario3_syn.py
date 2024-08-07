@@ -55,7 +55,7 @@ def retro_vs_prospective():
                          mats[i][:, 1] + mats[i][:, 2],
                          alpha=0.5, color=cols[i])
 
-    plt.legend(["Prospective-MLP", "Retrospective-MLP", "Bayes-risk"])
+    plt.legend(["Time-MLP", "MLP", "Bayes-risk"])
 
     plt.title("Scenario 3: Synthetic Data")
     plt.xlabel("Time (t)")
