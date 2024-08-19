@@ -4,9 +4,8 @@ import torch
 import os
 from torch.utils.data import Dataset
 from torch.utils.data import DataLoader
-from torchvision.datasets import MNIST
+from torchvision.datasets import MNIST, CIFAR10
 from torchvision.transforms import transforms
-from torchvision import datasets
 
 
 class SyntheticScenario2:
@@ -165,7 +164,6 @@ class MNISTScenario2:
         self.mnist = MNIST(root='data', train=True, download=True,
                            transform=transforms.ToTensor())
 
-
         get_ind = []
         for i in range(10):
             get_ind.append(np.where(self.mnist.targets == i)[0])
@@ -234,6 +232,87 @@ class MNISTScenario2:
     def store_data(self):
         os.makedirs('data/mnist', exist_ok=True)
         with open('data/mnist/scenario2.pkl', 'wb') as fp:
+            pickle.dump(self.data, fp)
+
+
+class CIFARScenario2:
+    def __init__(self, cfg):
+        self.seq_len = cfg.seq_len
+        self.num_seeds = cfg.num_seeds
+        self.period = cfg.period
+        self.cfg = cfg
+
+        self.cifar = CIFAR10(root='data', train=True, download=True,
+                           transform=transforms.ToTensor())
+
+        get_ind = []
+        for i in range(10):
+            get_ind.append(np.where(self.cifar.targets == i)[0])
+        self.yind = get_ind
+
+    def generate_data(self):
+        xseq, yseq, taskseq = [], [], []
+        tseq = []
+        for sd in range(self.num_seeds):
+            dat = self.gen_sequence(sd)
+            xseq.append(dat[0])
+            yseq.append(dat[1])
+            taskseq.append(dat[2])
+            tseq.append(np.arange(self.seq_len))
+
+        xseq = np.array(xseq)
+        yseq = np.array(yseq)
+        tseq = np.array(tseq)
+        taskseq = np.array(taskseq)
+
+        self.data = {'x': xseq,
+                     'y': yseq,
+                     't': tseq,
+                     'task': taskseq,
+                     'cfg': self.cfg}
+
+    def gen_sequence(self, seed):
+        np.random.seed(seed)
+
+        # task 1 - {0, 1, 2, 3, 4}
+        # task 2- {3, 4, 5, 6}
+        # task 3 - {5, 6, 7, 8}
+        # task 4 - {7, 8, 9}
+
+        # create task indices
+        T = self.period
+        cur_t = 0
+        tind = []
+        xseq = []
+        yseq = []
+        for i in range(self.seq_len):
+            cur_t = i % 4
+            tind.append(cur_t)
+
+            if cur_t == 0:
+                y = np.random.randint(0, 5)
+                yseq.append(y - 0)
+            elif cur_t == 1:
+                y = np.random.randint(3, 7)
+                yseq.append(y - 3)
+            elif cur_t == 2:
+                y = np.random.randint(5, 9)
+                yseq.append(y - 5)
+            elif cur_t == 3:
+                y = np.random.randint(7, 10)
+                yseq.append(y - 7)
+
+            xind = np.random.choice(self.yind[y])
+            xseq.append(self.cifar.data[xind].reshape(-1).float() / 255)
+
+        Xdat = np.stack(xseq)
+        Ydat = np.array(yseq)
+        tind = np.array(tind)
+        return Xdat, Ydat, tind
+
+    def store_data(self):
+        os.makedirs('data/cifar', exist_ok=True)
+        with open('data/cifar/scenario2.pkl', 'wb') as fp:
             pickle.dump(self.data, fp)
 
 

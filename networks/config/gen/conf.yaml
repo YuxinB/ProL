@@ -6,6 +6,9 @@ num_seeds: 50
 seq_len: 4000
 period: 20
 
+data: 'synthetic'  # 'synthetic', 'mnist', 'cifar'
+scenario: 2
+
 
 
 # Nested configs. Disable hydra logging

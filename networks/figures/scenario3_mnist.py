@@ -20,7 +20,7 @@ def online_learners_prospective2():
         mat = []
         for i in range(len(info)):
 
-            tstep = info[i][0]
+            tstep = info[i][0] / 10
             err = info[i][1]
             err = np.mean(err, axis=1)
 
