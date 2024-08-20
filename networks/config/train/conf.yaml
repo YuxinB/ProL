@@ -1,6 +1,6 @@
 deploy: False
 seed: 0
-dev: 'cuda:1'
+dev: 'cuda:0'
 
 tag: scratch
 name: 'mlp_scenario2_period20'
