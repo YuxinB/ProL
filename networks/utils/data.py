@@ -28,7 +28,7 @@ class SyntheticScenario2:
             taskseq.append(dat[2])
             tseq.append(np.arange(self.seq_len))
 
-        xseq = np.array(xseq)
+        xseq = np.array(xseq) / 4
         yseq = np.array(yseq)
         tseq = np.array(tseq)
         taskseq = np.array(taskseq)
@@ -88,7 +88,7 @@ class SyntheticScenario3:
             taskseq.append(dat[2])
             tseq.append(np.arange(self.seq_len))
 
-        xseq = np.array(xseq)
+        xseq = np.array(xseq) / 4
         yseq = np.array(yseq)
         tseq = np.array(tseq)
         taskseq = np.array(taskseq)
@@ -320,7 +320,7 @@ class SyntheticDataset(Dataset):
     def __init__(self, data_path, idx, run_id, test, past=None):
         with open(data_path, 'rb') as fp:
             self.data = pickle.load(fp)
-        self.x = torch.FloatTensor(self.data['x']) // 4
+        self.x = torch.FloatTensor(self.data['x'])
         self.y = torch.LongTensor(self.data['y'])
         self.t = torch.FloatTensor(self.data['t'])
 

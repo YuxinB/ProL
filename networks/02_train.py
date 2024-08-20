@@ -14,23 +14,23 @@ def main(cfg):
     set_seed(cfg.seed)
     open_log(cfg)
 
-    net = create_net(cfg)
-
     allerrs_t = []
-    for t in range(cfg.tstart, cfg.tend, cfg.tskip):
+    for seed in range(cfg.numseeds):
+        print("Seed %d =================" % seed)
         all_errs = []
-        for seed in range(cfg.numseeds):
+        net = create_net(cfg)
 
+        for t in range(cfg.tstart, cfg.tend, cfg.tskip):
             # Create new network if not fine-tuning
             loaders = create_dataloader(cfg, t, seed)
             if (cfg.fine_tune is None) and (cfg.bgd is None):
                 net = create_net(cfg)
 
             errs = train(cfg, net, loaders)
-            all_errs.append(errs)
+            all_errs.append((t, errs))
             print("Time %d, Seed %d, Error: %.4f" % (t, seed, np.mean(errs)))
-        all_errs = np.array(all_errs)
-        allerrs_t.append((t, all_errs))
+
+        allerrs_t.append(all_errs)
 
     fdir = os.path.join('checkpoints', cfg.tag)
     os.makedirs(fdir, exist_ok=True)
