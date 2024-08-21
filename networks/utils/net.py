@@ -34,6 +34,7 @@ class TimeEmbedding(nn.Module):
 
         return torch.cat([self.sin, self.cos], dim=-1)
 
+
 class DiscreteTime(nn.Module):
     def __init__(self, dev, dim):
         super(DiscreteTime, self).__init__()
@@ -43,6 +44,7 @@ class DiscreteTime(nn.Module):
         t = (t % self.mode)
         t = torch.gt(t, self.mode // 2).float()
         return t
+
 
 class MLP(nn.Module):
     def __init__(self, in_dim, out_dim, hidden_dim):
@@ -56,6 +58,42 @@ class MLP(nn.Module):
         x = torch.relu(self.fc2(x))
         x = self.fc3(x)
         return x
+
+
+class CNN(nn.Module):
+    """
+    Small convolution network with no residual connections (single-head)
+    """
+    def __init__(self, num_classes=10):
+        super(CNN, self).__init__()
+        channels = 3
+        avg_pool = 2
+        linsize = 320
+        self.conv1 = nn.Conv2d(channels, 80, kernel_size=3, bias=False)
+        self.conv2 = nn.Conv2d(80, 80, kernel_size=3)
+        self.bn2 = nn.BatchNorm2d(80)
+        self.conv3 = nn.Conv2d(80, 80, kernel_size=3)
+        self.bn3 = nn.BatchNorm2d(80)
+
+        self.relu = nn.ReLU(inplace=True)
+        self.maxpool = nn.MaxPool2d(avg_pool)
+
+        self.fc = nn.Linear(linsize, num_classes)
+
+    def forward(self, x):
+        x = self.conv1(x)
+        x = self.maxpool(self.relu(x))
+
+        x = self.conv2(x)
+        x = self.maxpool(self.relu(self.bn2(x)))
+
+        x = self.conv3(x)
+        x = self.maxpool(self.relu(self.bn3(x)))
+        x = x.flatten(1, -1)
+
+        x = self.fc(x)
+        return x
+
 
 class ProspectiveMLP(nn.Module):
     def __init__(self, cfg, in_dim, out_dim, hidden_dim, tdim=50):
@@ -74,4 +112,48 @@ class ProspectiveMLP(nn.Module):
         x = torch.relu(self.fc1(x))
         x = torch.relu(self.fc2(x))
         x = self.fc3(x)
+        return x
+
+
+class ProspectiveCNN(nn.Module):
+    """
+    Small convolution network with no residual connections (single-head)
+    """
+    def __init__(self, cfg, num_classes=10, tdim=50):
+        super(ProspectiveCNN, self).__init__()
+        channels = 3
+        avg_pool = 2
+        linsize = 320
+        self.time_embed = TimeEmbedding(cfg.dev, tdim)
+        self.time_project = nn.Linear(tdim, 32*32)
+
+        channels += 1
+
+        self.conv1 = nn.Conv2d(channels, 80, kernel_size=3, bias=False)
+        self.conv2 = nn.Conv2d(80, 80, kernel_size=3)
+        self.bn2 = nn.BatchNorm2d(80)
+        self.conv3 = nn.Conv2d(80, 80, kernel_size=3)
+        self.bn3 = nn.BatchNorm2d(80)
+
+        self.relu = nn.ReLU(inplace=True)
+        self.maxpool = nn.MaxPool2d(avg_pool)
+        self.fc = nn.Linear(linsize, num_classes)
+
+    def forward(self, x, t):
+        tembed = self.time_embed(t.reshape(-1, 1))
+        tembed = self.time_project(tembed).view(-1, 1, 32, 32)
+
+        x = torch.cat([x, tembed], dim=1)
+
+        x = self.conv1(x)
+        x = self.maxpool(self.relu(x))
+
+        x = self.conv2(x)
+        x = self.maxpool(self.relu(self.bn2(x)))
+
+        x = self.conv3(x)
+        x = self.maxpool(self.relu(self.bn3(x)))
+        x = x.flatten(1, -1)
+
+        x = self.fc(x)
         return x

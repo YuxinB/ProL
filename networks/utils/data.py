@@ -131,7 +131,7 @@ class SyntheticScenario3(ProspectiveData):
 
 class MnistScenario2(ProspectiveData):
     def __init__(self, cfg):
-        super().__init__()
+        super(MnistScenario2, self).__init__()
         self.dataset = MNIST(root='data', train=True, download=True,
                            transform=transforms.ToTensor())
 
