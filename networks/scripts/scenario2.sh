@@ -45,9 +45,14 @@
 #     train.epochs=1 fine_tune=16 data.bs=8 bgd=True data.path='./data/mnist/scenario2.pkl'
 
 ######### CIFAR
-# python3 01_generate.py seq_len=40000 num_seeds=5 data=cifar scenario=2
+python3 01_generate.py seq_len=40000 num_seeds=1 data=cifar scenario=2
 
-python3 02_train.py  net.type=cnn_cifar name='erm_cnn' \
-    dev='cuda:0' tag=cifar_s2 numseeds=5 \
-    tstart=20 tend=10021 tskip=500 \
+# python3 02_train.py  net.type=cnn_cifar name='erm_cnn' \
+#     dev='cuda:2' tag=cifar_s2 numseeds=5 \
+#     tstart=20 tend=10021 tskip=500 \
+#     train.epochs=100 data.bs=32 data.path='./data/cifar/scenario2.pkl'
+
+python3 02_train.py  net.type=prospective_cnn_cifar name='prospective_cnn' \
+    dev='cuda:2' tag=cifar_s2 numseeds=1 \
+    tstart=5020 tend=10021 tskip=50000 \
     train.epochs=100 data.bs=32 data.path='./data/cifar/scenario2.pkl'

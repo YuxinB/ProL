@@ -84,7 +84,7 @@ class CNN(nn.Module):
 
         self.fc = nn.Linear(linsize, num_classes)
 
-    def forward(self, x):
+    def forward(self, x, t):
         x = x.view(-1, 32, 32, 3)
         x = x.permute(0, 3, 1, 2)
 

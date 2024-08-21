@@ -60,9 +60,9 @@ fnames_mnist_s2 = ["./checkpoints/mnist_s2/erm_mlp_errs.pkl",
                    "./checkpoints/mnist_s2/mlp_bgd_errs.pkl"]
 fout_mnist_s2 = "./figures/metrics/mnist_scenario2.pkl"
 
-fnames_syn_s3 = ["./checkpoints/mnist_s3/erm_mlp_errs.pkl",
+fnames_mnist_s3 = ["./checkpoints/mnist_s3/erm_mlp_errs.pkl",
                  "./checkpoints/mnist_s3/prospective_mlp_errs.pkl"]
-fout_syn_s3 = "figures/metrics/mnist_scenario3.pkl"
+fout_mnist_s3 = "figures/metrics/mnist_scenario3.pkl"
 
 # create_metrics(fnames_syn_s2, fout_syn_s2, model_names_s2)
 # create_metrics(fnames_mnist_s2, fout_mnist_s2, model_names_s2)
