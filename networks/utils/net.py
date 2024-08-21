@@ -16,6 +16,10 @@ def create_net(cfg):
         net = ProspectiveMLP(cfg, 2, 2, 256)
     elif cfg.net.type == 'prospective_mlp_mnist':
         net = ProspectiveMLP(cfg, 784, 5, 256)
+    elif cfg.net.type == 'cnn_cifar':
+        net = CNN(5)
+    elif cfg.net.type == 'prospective_cnn_cifar':
+        net = ProspectiveCNN(cfg, 5)
     else:
         raise NotImplementedError
 
