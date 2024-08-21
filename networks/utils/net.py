@@ -81,6 +81,9 @@ class CNN(nn.Module):
         self.fc = nn.Linear(linsize, num_classes)
 
     def forward(self, x):
+        x = x.view(-1, 32, 32, 3)
+        x = x.permute(0, 3, 1, 2)
+
         x = self.conv1(x)
         x = self.maxpool(self.relu(x))
 
@@ -140,6 +143,9 @@ class ProspectiveCNN(nn.Module):
         self.fc = nn.Linear(linsize, num_classes)
 
     def forward(self, x, t):
+        x = x.view(-1, 32, 32, 3)
+        x = x.permute(0, 3, 1, 2)
+
         tembed = self.time_embed(t.reshape(-1, 1))
         tembed = self.time_project(tembed).view(-1, 1, 32, 32)
 

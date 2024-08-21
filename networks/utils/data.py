@@ -131,13 +131,14 @@ class SyntheticScenario3(ProspectiveData):
 
 class MnistScenario2(ProspectiveData):
     def __init__(self, cfg):
-        super(MnistScenario2, self).__init__()
+        super(MnistScenario2, self).__init__(cfg)
         self.dataset = MNIST(root='data', train=True, download=True,
                            transform=transforms.ToTensor())
 
         get_ind = []
+        targets = np.array(self.dataset.targets)
         for i in range(10):
-            get_ind.append(np.where(self.dataset.targets == i)[0])
+            get_ind.append(np.where(targets == i)[0])
         self.yind = get_ind
 
     def gen_sequence(self, seed):
@@ -172,7 +173,7 @@ class MnistScenario2(ProspectiveData):
                 yseq.append(y - 7)
 
             xind = np.random.choice(self.yind[y])
-            xseq.append(self.dataset.data[xind].reshape(-1).float() / 255)
+            xseq.append(self.dataset.data[xind].reshape(-1) / 255.0)
 
         Xdat = np.stack(xseq)
         Ydat = np.array(yseq)
@@ -255,9 +256,15 @@ class CifarScenario2(MnistScenario2):
                                transform=transforms.ToTensor())
 
         get_ind = []
+        targets = np.array(self.dataset.targets)
         for i in range(10):
-            get_ind.append(np.where(self.dataset.targets == i)[0])
+            get_ind.append(np.where(targets == i)[0])
         self.yind = get_ind
+
+    def store_data(self):
+        os.makedirs('data/cifar', exist_ok=True)
+        with open('data/cifar/scenario2.pkl', 'wb') as fp:
+            pickle.dump(self.data, fp)
 
 
 class CifarScenario3(MnistScenario3):
@@ -272,9 +279,15 @@ class CifarScenario3(MnistScenario3):
 
         self.dataset = CIFAR10(root='data', train=True, download=True,
                                transform=transforms.ToTensor())
+        targets = np.array(self.dataset.targets)
         for i in range(10):
-            get_ind.append(np.where(self.cifar.targets == i)[0])
+            get_ind.append(np.where(targets == i)[0])
         self.yind = get_ind
+
+    def store_data(self):
+        os.makedirs('data/cifar', exist_ok=True)
+        with open('data/cifar/scenario3.pkl', 'wb') as fp:
+            pickle.dump(self.data, fp)
 
 
 class SyntheticDataset(Dataset):
