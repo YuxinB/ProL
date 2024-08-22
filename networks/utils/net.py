@@ -20,8 +20,14 @@ def create_net(cfg):
         net = CNN(5)
     elif cfg.net.type == 'prospective_cnn_cifar':
         net = ProspectiveCNN(cfg, 5)
+    elif cfg.net.type == 'mlp_cifar':
+        net = MLP(3072, 5, 512)
+    elif cfg.net.type == 'prospective_mlp_cifar':
+        net = ProspectiveMLP(cfg, 3072, 5, 512)
     else:
         raise NotImplementedError
+
+    net.to(cfg.dev)
 
     return net
 
@@ -132,9 +138,18 @@ class ProspectiveCNN(nn.Module):
         avg_pool = 2
         linsize = 320
         self.time_embed = TimeEmbedding(cfg.dev, tdim)
-        self.time_project = nn.Linear(tdim, 32*32)
+        self.time_last = cfg.net.time_last
 
-        channels += 1
+        if not self.time_last:
+            channels += 1
+            self.fc_t1 = nn.Linear(tdim, 500)
+            self.fc_t2 = nn.Linear(500, 32*32)
+            self.fc = nn.Linear(linsize, num_classes)
+        else:
+            linsize += tdim
+            self.fc_t1 = nn.Linear(linsize, 500)
+            self.fc_t2 = nn.Linear(500, 500)
+            self.fc = nn.Linear(500, num_classes)
 
         self.conv1 = nn.Conv2d(channels, 80, kernel_size=3, bias=False)
         self.conv2 = nn.Conv2d(80, 80, kernel_size=3)
@@ -144,16 +159,17 @@ class ProspectiveCNN(nn.Module):
 
         self.relu = nn.ReLU(inplace=True)
         self.maxpool = nn.MaxPool2d(avg_pool)
-        self.fc = nn.Linear(linsize, num_classes)
 
     def forward(self, x, t):
         x = x.view(-1, 32, 32, 3)
         x = x.permute(0, 3, 1, 2)
 
         tembed = self.time_embed(t.reshape(-1, 1))
-        tembed = self.time_project(tembed).view(-1, 1, 32, 32)
 
-        x = torch.cat([x, tembed], dim=1)
+        if not self.time_last:
+            tembed = self.relu(self.fc_t1(tembed))
+            tembed = self.fc_t2(tembed).view(-1, 1, 32, 32)
+            x = torch.cat([x, tembed], dim=1)
 
         x = self.conv1(x)
         x = self.maxpool(self.relu(x))
@@ -164,6 +180,11 @@ class ProspectiveCNN(nn.Module):
         x = self.conv3(x)
         x = self.maxpool(self.relu(self.bn3(x)))
         x = x.flatten(1, -1)
+
+        if self.time_last:
+            x = torch.cat([x, tembed], dim=-1)
+            x = torch.relu(self.fc_t1(x))
+            x = torch.relu(self.fc_t2(x))
 
         x = self.fc(x)
         return x

@@ -217,7 +217,7 @@ class MnistScenario3(MnistScenario2):
                 yseq.append(y - 7)
 
             xind = np.random.choice(self.yind[y])
-            xseq.append(self.mnist.data[xind].reshape(-1).float() / 255)
+            xseq.append(self.dataset.data[xind].reshape(-1) / 255.5)
 
             # Every T steps, switch task
             if (i + 1) % T == 0:
@@ -279,6 +279,8 @@ class CifarScenario3(MnistScenario3):
 
         self.dataset = CIFAR10(root='data', train=True, download=True,
                                transform=transforms.ToTensor())
+
+        get_ind = []
         targets = np.array(self.dataset.targets)
         for i in range(10):
             get_ind.append(np.where(targets == i)[0])
@@ -290,13 +292,12 @@ class CifarScenario3(MnistScenario3):
             pickle.dump(self.data, fp)
 
 
+
 class SyntheticDataset(Dataset):
-    def __init__(self, data_path, idx, run_id, test, past=None):
-        with open(data_path, 'rb') as fp:
-            self.data = pickle.load(fp)
-        self.x = torch.FloatTensor(self.data['x'])
-        self.y = torch.LongTensor(self.data['y'])
-        self.t = torch.FloatTensor(self.data['t'])
+    def __init__(self, data, idx, run_id, test, past=None):
+        self.x = data['x']
+        self.y = data['y']
+        self.t = data['t']
 
         if test:
             self.x = self.x[run_id, :]
@@ -324,10 +325,11 @@ class SyntheticDataset(Dataset):
         return x, y, t
 
 
-def create_dataloader(cfg, t, seed):
+def create_dataloader(cfg, t, seed, data):
     past = cfg.fine_tune
-    train_dataset = SyntheticDataset(cfg.data.path, t, seed, False, past)
-    test_dataset = SyntheticDataset(cfg.data.path, t, seed, True, past)
+
+    train_dataset = SyntheticDataset(data, t, seed, False, past)
+    test_dataset = SyntheticDataset(data, t, seed, True, past)
 
     trainloader = DataLoader(train_dataset,
                             batch_size=cfg.data.bs,
