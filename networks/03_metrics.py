@@ -45,10 +45,11 @@ if __name__ == "__main__":
     model_names_s2 = ["ERM", "Prospective", "Online-SGD", "Bayesian GD"]
     model_names_s3 = ["ERM", "Prospective"]
 
-    model_names_s2c = ["ERM", "Prospective", "Prospective (variant 2)",
-                       "Online-SGD", "Bayesian GD"]
+    model_names_s2c = ["ERM", "Prospective", "Online-SGD", "Bayesian GD",
+                       "Prospective (variant 2)", "Prospective (MLP)" ]
     model_names_s3c = ["ERM", "Prospective", "Online-SGD", "Bayesian GD"]
-    model_names_s3c = ["ERM", "Prospective", "Prospective (variant 2)"]
+    model_names_s3c = ["ERM", "Prospective",
+                       "Prospective (variant 2)", "Prospective (MLP)"]
 
     fnames_syn_s2 = ["./checkpoints/scenario2_v2/mlp_erm_errs.pkl",
                      "./checkpoints/scenario2_v2/mlp_prospective_errs.pkl",
@@ -73,15 +74,18 @@ if __name__ == "__main__":
 
     # TODO add two more rows
     fnames_cifar_s2 = ["./checkpoints/cifar_s2/erm_cnn_errs.pkl",
-                     "./checkpoints/cifar_s2/prospective_cnn_o_errs.pkl",
-                     "./checkpoints/cifar_s2/prospective_cnn_i_errs.pkl",
-                     "./checkpoints/cifar_s2/cnn_o_ft1_errs.pkl",
-                     "./checkpoints/cifar_s2/cnn_o_bgd_errs.pkl"]
+                       "./checkpoints/cifar_s2/prospective_cnn_o_errs.pkl",
+                       "./checkpoints/cifar_s2/cnn_o_ft1_errs.pkl",
+                       "./checkpoints/cifar_s2/cnn_o_bgd_errs.pkl",
+                       "./checkpoints/cifar_s2/prospective_cnn_i_errs.pkl",
+                       "./checkpoints/cifar_s2/prospective_mlp_errs.pkl"
+                     ]
     fout_cifar_s2 = "figures/metrics/cifar_scenario2.pkl"
 
     fnames_cifar_s3 = ["./checkpoints/cifar_s3/erm_cnn_errs.pkl",
-                     "./checkpoints/cifar_s3/prospective_cnn_o_errs.pkl",
-                     "./checkpoints/cifar_s3/prospective_cnn_i_errs.pkl",
+                       "./checkpoints/cifar_s3/prospective_cnn_o_errs.pkl",
+                       "./checkpoints/cifar_s3/prospective_cnn_i_errs.pkl",
+                       "./checkpoints/cifar_s3/prospective_mlp_errs.pkl"
                      ]
     fout_cifar_s3 = "figures/metrics/cifar_scenario3.pkl"
 
