@@ -1,12 +1,13 @@
 deploy: False
 seed: 0
-dev: 'cuda:1'
+dev: 'cuda:0'
 
 tag: scratch
 name: 'mlp_scenario2_period20'
 
 net:
   type: "prospective_mlp"  # mlp, prospective_mlp
+  time_last: False
 
 fine_tune: 
 bgd: False
@@ -24,7 +25,7 @@ data:
   workers: 4
   path: "./data/synthetic/scenario2_period20.pkl"
 
-
+  #
 # Nested configs. Disable hydra logging
 defaults:
   - _self_
