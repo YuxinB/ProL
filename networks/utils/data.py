@@ -78,12 +78,18 @@ class SyntheticScenario3:
         self.num_seeds = cfg.num_seeds
         self.period = cfg.period
         self.cfg = cfg
+        self.variant = cfg.variant
 
     def generate_data(self):
         xseq, yseq, taskseq = [], [], []
         tseq = []
         for sd in range(self.num_seeds):
-            dat = self.gen_sequence(sd)
+            if self.variant == 'markov2'
+                dat = self.gen_sequence_markov2(sd)
+            elif self.variant == 'markov4':
+                dat = self.gen_sequence_markov4(sd)
+            else:
+                raise ValueError('Invalid variant')
             xseq.append(dat[0])
             yseq.append(dat[1])
             taskseq.append(dat[2])
@@ -100,7 +106,7 @@ class SyntheticScenario3:
                      'task': taskseq,
                      'cfg': self.cfg}
 
-    def gen_sequence(self, seed):
+    def gen_sequence_markov4(self, seed):
         np.random.seed(seed)
 
         # create task indices
@@ -137,10 +143,6 @@ class SyntheticScenario3:
         # Generate data points
         tind_m = (tind + Ydat) % 4
 
-        # 0 -- (1, 1)
-        # 1 - (1, -1)
-        # 2 - (-1, -1)
-
         xmask1 = 1 - (tind_m < 2) * 2
         xmask2 = 1 - (tind_m >= 1) * (tind_m <= 2) * 2
 
@@ -149,10 +151,14 @@ class SyntheticScenario3:
 
         return Xdat, Ydat, tind
 
+    def gen_sequence_markov2(self, seed):
+
+
     def store_data(self):
         os.makedirs('data/synthetic', exist_ok=True)
-        with open('data/synthetic/scenario3_period%d.pkl' % self.period, 'wb') as fp:
+        with open('data/synthetic/scenario3_%s.pkl' % self.variant, 'wb') as fp:
             pickle.dump(self.data, fp)
+
 
 
 class MNISTScenario2:
