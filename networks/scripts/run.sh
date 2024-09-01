@@ -6,9 +6,10 @@
 # Scenario 3
 # python3 02_train.py  net.type=mlp3 name='mlp_l' tag=scenario3 numseeds=1 tstart=50 tend=4000 tskip=200 train.epochs=100 data.bs=32 data.path='./data/synthetic/scenario3_period20.pkl'
 
-python3 02_train.py  net.type=prospective_mlp3 name='prospective_mlp_l' tag=scenario3 numseeds=1 tstart=50 tend=4000 tskip=200 train.epochs=100 data.bs=32 data.path='./data/synthetic/scenario3_period20.pkl'
+# python3 02_train.py  net.type=prospective_mlp3 name='prospective_mlp_l' tag=scenario3 numseeds=1 tstart=50 tend=4000 tskip=200 train.epochs=100 data.bs=32 data.path='./data/synthetic/scenario3_period20.pkl'
 
-# python3 02_train.py  net.type=prospective_mlp_mnist name='prospective_mlp_l' tag=mnist_s2 numseeds=1 tstart=500 tend=20001 tskip=1000 train.epochs=100 data.bs=32 data.path='./data/mnist/scenario2.pkl'
+python3 02_train.py  net.type=prospective_mlp_mnist name='prospective_mlp_l' tag=mnist_s2_v2 numseeds=1 tstart=500 tend=20001 tskip=1000 train.epochs=100 data.bs=32 data.path='./data/mnist/scenario2.pkl'
+
 
 # python3 02_train.py  net.type=mlp_mnist name='mlp_l' tag=mnist_s2 numseeds=1 tstart=500 tend=20001 tskip=1000 train.epochs=10 data.bs=32 data.path='./data/mnist/scenario2.pkl'
 

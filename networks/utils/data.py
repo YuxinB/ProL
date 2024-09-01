@@ -74,7 +74,40 @@ class SyntheticScenario3(ProspectiveData):
     """
     Generate data from a markov process
     """
-    def gen_sequence(self, seed):
+    def __init__(self, cfg):
+        self.seq_len = cfg.seq_len
+        self.num_seeds = cfg.num_seeds
+        self.period = cfg.period
+        self.cfg = cfg
+        self.variant = cfg.variant
+
+    def generate_data(self):
+        xseq, yseq, taskseq = [], [], []
+        tseq = []
+        for sd in range(self.num_seeds):
+            if self.variant == 'markov2'
+                dat = self.gen_sequence_markov2(sd)
+            elif self.variant == 'markov4':
+                dat = self.gen_sequence_markov4(sd)
+            else:
+                raise ValueError('Invalid variant')
+            xseq.append(dat[0])
+            yseq.append(dat[1])
+            taskseq.append(dat[2])
+            tseq.append(np.arange(self.seq_len))
+
+        xseq = np.array(xseq)
+        yseq = np.array(yseq)
+        tseq = np.array(tseq)
+        taskseq = np.array(taskseq)
+
+        self.data = {'x': xseq,
+                     'y': yseq,
+                     't': tseq,
+                     'task': taskseq,
+                     'cfg': self.cfg}
+
+    def gen_sequence_markov4(self, seed):
         np.random.seed(seed)
 
         # create task indices
@@ -111,10 +144,6 @@ class SyntheticScenario3(ProspectiveData):
         # Generate data points
         tind_m = (tind + Ydat) % 4
 
-        # 0 -- (1, 1)
-        # 1 - (1, -1)
-        # 2 - (-1, -1)
-
         xmask1 = 1 - (tind_m < 2) * 2
         xmask2 = 1 - (tind_m >= 1) * (tind_m <= 2) * 2
 
@@ -123,9 +152,43 @@ class SyntheticScenario3(ProspectiveData):
 
         return Xdat, Ydat, tind
 
+    def gen_sequence_markov2(self, seed):
+        np.random.seed(seed)
+    
+        # Create task indices
+        T = self.period
+        cur_t = 0
+        tind = []
+        for i in range(self.seq_len):
+            tind.append(cur_t)
+    
+            # Every T steps, switch task
+            if i % T == 0:
+                cur_t = 0
+            else:
+                # Change task with probability 0.2
+                if np.random.rand() < 0.2:
+                    cur_t = 1 - cur_t
+    
+        tind = np.array(tind)
+    
+        # Generate samples from U[-2, -1] and U[1, 2]
+        x1 = np.random.uniform(-2, -1, self.seq_len)
+        x2 = np.random.uniform(1, 2, self.seq_len)
+        mask = np.random.choice([0, 1], p=[0.5, 0.5], size=self.seq_len)
+        Xdat = x1 * mask + x2 * (1 - mask)
+    
+        # Create labels
+        Ydat = np.zeros(self.seq_len, dtype=int)
+        Ydat[tind == 0] = (Xdat[tind == 0] > 0).astype(int)
+        Ydat[tind == 1] = (Xdat[tind == 1] < 0).astype(int)
+    
+        return Xdat, Ydat, tind
+
+
     def store_data(self):
         os.makedirs('data/synthetic', exist_ok=True)
-        with open('data/synthetic/scenario3_period%d.pkl' % self.period, 'wb') as fp:
+        with open('data/synthetic/scenario3_%s.pkl' % self.variant, 'wb') as fp:
             pickle.dump(self.data, fp)
 
 
@@ -290,7 +353,6 @@ class CifarScenario3(MnistScenario3):
         os.makedirs('data/cifar', exist_ok=True)
         with open('data/cifar/scenario3.pkl', 'wb') as fp:
             pickle.dump(self.data, fp)
-
 
 
 class SyntheticDataset(Dataset):

@@ -5,6 +5,7 @@ seed: 0
 num_seeds: 50
 seq_len: 4000
 period: 20
+variant: 
 
 data: 'synthetic'  # 'synthetic', 'mnist', 'cifar'
 scenario: 2
