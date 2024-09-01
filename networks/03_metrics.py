@@ -51,28 +51,43 @@ if __name__ == "__main__":
     model_names_s3c = ["ERM", "Prospective",
                        "Prospective (variant 2)", "Prospective (MLP)"]
 
+    ##### Synthetic data - Scenario 2
     fnames_syn_s2 = ["./checkpoints/scenario2_v2/mlp_erm_errs.pkl",
                      "./checkpoints/scenario2_v2/mlp_prospective_errs.pkl",
                      "./checkpoints/scenario2_v2/mlp_ft1_errs.pkl",
                      "./checkpoints/scenario2_v2/mlp_bgd_errs.pkl"]
     fout_syn_s2 = "figures/metrics/syn_scenario2.pkl"
 
+    ##### Synthetic data - Scenario 3
     fnames_syn_s3 = ["./checkpoints/scenario3_v2/erm_mlp_errs.pkl",
                      "./checkpoints/scenario3_v2/prospective_mlp_errs.pkl"] 
     fout_syn_s3 = "figures/metrics/syn_scenario3.pkl"
 
+    ##### Synthetic data - Scenario 3 Markov 2
+    fnames_syn_s3_m2 = ["./checkpoints/scenario3_markov2/erm_mlp_errs.pkl",
+                        "./checkpoints/scenario3_markov2/prospective_mlp_errs.pkl"]
+    fout_syn_s3_m2 = "figures/metrics/syn_scenario3_markov2.pkl"
 
+
+    ##### MNIST - Scenario 2
     fnames_mnist_s2 = ["./checkpoints/mnist_s2_v2/erm_mlp_errs.pkl",
                        "./checkpoints/mnist_s2_v2/prospective_mlp_errs.pkl",
                        "./checkpoints/mnist_s2_v2/mlp_ft1_errs.pkl",
                        "./checkpoints/mnist_s2_v2/mlp_bgd_errs.pkl"]      
     fout_mnist_s2 = "./figures/metrics/mnist_scenario2.pkl"
 
+
+    # MNIST - Scenario 3
     fnames_mnist_s3 = ["./checkpoints/mnist_s3_v2/erm_mlp_errs.pkl",
                      "./checkpoints/mnist_s3_v2/prospective_mlp_errs.pkl"]
     fout_mnist_s3 = "figures/metrics/mnist_scenario3.pkl"
 
-    # TODO add two more rows
+    # MNIST - Scenario 3 Markov 2
+    fnames_mnist_s3_m2 = ["./checkpoints/mnist_s3_markov2/erm_mlp_errs.pkl", 
+                        "./checkpoints/mnist_s3_markov2/prospective_mlp_errs.pkl"]
+    fout_mnist_s3_m2 = "figures/metrics/mnist_scenario3_markov2.pkl"
+
+    ##### CIFAR - Scenario 2
     fnames_cifar_s2 = ["./checkpoints/cifar_s2/erm_cnn_errs.pkl",
                        "./checkpoints/cifar_s2/prospective_cnn_o_errs.pkl",
                        "./checkpoints/cifar_s2/cnn_o_ft1_errs.pkl",
@@ -82,6 +97,7 @@ if __name__ == "__main__":
                      ]
     fout_cifar_s2 = "figures/metrics/cifar_scenario2.pkl"
 
+    ## CIFAR - Scenario 3
     fnames_cifar_s3 = ["./checkpoints/cifar_s3/erm_cnn_errs.pkl",
                        "./checkpoints/cifar_s3/prospective_cnn_o_errs.pkl",
                        "./checkpoints/cifar_s3/prospective_cnn_i_errs.pkl",
@@ -89,11 +105,20 @@ if __name__ == "__main__":
                      ]
     fout_cifar_s3 = "figures/metrics/cifar_scenario3.pkl"
 
-    create_metrics(fnames_syn_s2, fout_syn_s2, model_names_s2)
-    create_metrics(fnames_syn_s3, fout_syn_s3, model_names_s3)
+    # CIFAR - Scenario 3 Markov 2
+    fnames_cifar_s3_m2 = ["./checkpoints/cifar_s3_markov2/erm_cnn_errs.pkl",
+                         "./checkpoints/cifar_s3_markov2/prospective_cnn_o_errs.pkl"
+                        ]
+    fout_cifar_s3_m2 = "figures/metrics/cifar_scenario3_markov2.pkl"
 
-    create_metrics(fnames_mnist_s2, fout_mnist_s2, model_names_s2)
-    create_metrics(fnames_mnist_s3, fout_mnist_s3, model_names_s3)
-
-    create_metrics(fnames_cifar_s2, fout_cifar_s2, model_names_s2c)
-    create_metrics(fnames_cifar_s3, fout_cifar_s3, model_names_s3c)
+    # create_metrics(fnames_syn_s2, fout_syn_s2, model_names_s2)
+    # create_metrics(fnames_syn_s3, fout_syn_s3, model_names_s3)
+    create_metrics(fnames_syn_s3_m2, fout_syn_s3_m2, model_names_s3)
+    
+    # create_metrics(fnames_mnist_s2, fout_mnist_s2, model_names_s2)
+    # create_metrics(fnames_mnist_s3, fout_mnist_s3, model_names_s3)
+    create_metrics(fnames_mnist_s3_m2, fout_mnist_s3_m2, model_names_s3)
+    
+    # create_metrics(fnames_cifar_s2, fout_cifar_s2, model_names_s2c)
+    # create_metrics(fnames_cifar_s3, fout_cifar_s3, model_names_s3c)
+    create_metrics(fnames_cifar_s3_m2, fout_cifar_s3_m2, model_names_s3)
